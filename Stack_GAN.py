@@ -1,4 +1,4 @@
-from GAN_cls_Block import *
+from Stack_GAN_Block import *
 
 class embedding(tf.keras.Model):
   def __init__(self, num_encoder_tokens, embedding_dim):
@@ -10,7 +10,7 @@ class embedding(tf.keras.Model):
 
 class Stage1_generator(tf.keras.Model):
   def __init__(self):
-    super(generator, self).__init__()
+    super(Stage1_generator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
     self.input_layer = generator_Input(shape=[4, 4, 1024])
 
@@ -33,7 +33,7 @@ class Stage1_generator(tf.keras.Model):
 
 class Stage1_discriminator(tf.keras.Model):
   def __init__(self):
-    super(discriminator, self).__init__()
+    super(Stage1_discriminator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
     self.input_layer = discriminator_Input(filters=128, strides=1)
     self.middle_layer_list1 = [
@@ -46,7 +46,7 @@ class Stage1_discriminator(tf.keras.Model):
     ]
     self.output_layer = discriminator_Output(with_activation=False)
 
-  def call(self, text_embedding1, x):
+  def call(self, text_embedding, x):
     # print('text shape: {}'.format(text.shape))
     # print('x shape: {}'.format(x.shape))
     code = self.encoder(text_embedding)
@@ -66,7 +66,7 @@ class Stage1_discriminator(tf.keras.Model):
 
 class Stage2_generator(tf.keras.Model):
   def __init__(self):
-    super(generator, self).__init__()
+    super(Stage2_generator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
     
     self.conv_list = [
@@ -102,7 +102,7 @@ class Stage2_generator(tf.keras.Model):
 
 class Stage2_discriminator(tf.keras.Model):
   def __init__(self):
-    super(discriminator, self).__init__()
+    super(Stage2_discriminator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
     self.input_layer = discriminator_Input(filters=128, strides=1)
     self.middle_layer_list1 = [
@@ -115,7 +115,7 @@ class Stage2_discriminator(tf.keras.Model):
     ]
     self.output_layer = discriminator_Output(with_activation=False)
 
-  def call(self, text_embedding1, x):
+  def call(self, text_embedding, x):
     # print('text shape: {}'.format(text.shape))
     # print('x shape: {}'.format(x.shape))
     code = self.encoder(text_embedding)
@@ -137,11 +137,10 @@ def get_gan(num_tokens):
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256)
   Stage1_Generator = Stage1_generator()
   Stage1_Discriminator = Stage1_discriminator()
-  Stage2_Genrator = Stage2_generator()
+  Stage2_Generator = Stage2_generator()
   Stage2_Discriminator = Stage2_discriminator()
-  Genrator = [Stage1_Generator, Stage2_Generator]
-  Discriminator = [Stage2_Discriminator, Stage2_Discriminator]
-  Discriminator = []
+  Generator = [Stage1_Generator, Stage2_Generator]
+  Discriminator = [Stage1_Discriminator, Stage2_Discriminator]
   gen_name = 'Stack_GAN'
   return Generator, Discriminator, Embedding, gen_name
 

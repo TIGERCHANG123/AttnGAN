@@ -54,7 +54,7 @@ class train_one_epoch():
             generated_images = self.Stage2_generator(text, generated_images, training=True)
             real_output = self.Stage2_discriminator(text, images_2, training=True)
             fake_output1 = self.Stage2_discriminator(text, generated_images, training=True)
-            fake_text = text_generator(images.shape[0])
+            fake_text = text_generator(images_1.shape[0])
             fake_text = self.embedding(fake_text)
             fake_output2 = self.Stage2_discriminator(fake_text, images_2, training=True)
 
@@ -73,8 +73,8 @@ class train_one_epoch():
         self.disc_loss.reset_states()
 
         for (batch, (image_1, image_2, text1, text2)) in enumerate(self.train_dataset):
-            noise = tf.random.normal([image.shape[0], self.noise_dim], dtype=tf.float32)
-            self.train_step(noise, image_1, image_2, text_1, text_2, text_generator)
+            noise = tf.random.normal([image_1.shape[0], self.noise_dim], dtype=tf.float32)
+            self.train_step(noise, image_1, image_2, text1, text2, text_generator)
             pic.add([self.gen_loss.result().numpy(), self.disc_loss.result().numpy()])
             pic.save()
             if batch % 100 == 0:

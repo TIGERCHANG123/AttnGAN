@@ -3,7 +3,7 @@ import os
 import getopt
 import sys
 import tensorflow as tf
-from GAN_cls import get_gan
+from Stack_GAN import get_gan
 from show_pic import draw
 import fid
 from Train import train_one_epoch
@@ -23,8 +23,7 @@ def main(continue_train, train_time, train_epoch):
     batch_size = 64
 
     dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
-    [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], 
-    embedding_model, model_name = get_gan(dataset.num_tokens)
+    [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], embedding_model, model_name = get_gan(dataset.num_tokens)
 
     model_dataset = model_name + '-' + dataset.name
 
@@ -36,10 +35,10 @@ def main(continue_train, train_time, train_epoch):
     Stage2_discriminator_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.5)
 
     checkpoint_path = temp_root + '/temp_model_save/' + model_dataset
-    ckpt = tf.train.Checkpoint(Stage1_genetator_optimizers=Stage1_genetator_optimizers, 
+    ckpt = tf.train.Checkpoint(Stage1_genetator_optimizer=Stage1_generator_optimizer,
     Stage1_discriminator_optimizer=Stage1_discriminator_optimizer,
     Stage1_generator=Stage1_generator, Stage1_discriminator=Stage1_discriminator, 
-    Stage2_genetator_optimizers=Stage2_genetator_optimizers, Stage2_discriminator_optimizer=Stage2_discriminator_optimizer,
+    Stage2_genetator_optimizer=Stage2_generator_optimizer, Stage2_discriminator_optimizer=Stage2_discriminator_optimizer,
     Stage2_generator=Stage2_generator, Stage2_discriminator=Stage2_discriminator, embedding=embedding_model)
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=2)
