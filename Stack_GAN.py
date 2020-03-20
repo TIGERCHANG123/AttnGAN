@@ -61,6 +61,7 @@ class Stage1_discriminator(tf.keras.Model):
     x = tf.concat([x, image_text], axis=-1)
     for i in range(len(self.middle_layer_list2)):
       x = self.middle_layer_list2[i](x)
+    print('Stage1 discriminator x shape: {}'.format(x.shape))
     x = self.output_layer(x)
     return x
 
