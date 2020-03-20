@@ -33,21 +33,24 @@ class train_one_epoch():
             text0 = self.embedding(text_1)
             text1 = self.embedding(text_2)
             text = (text0 + text1)/2
+            print('text shape: {}'.format(text.shape))
             generated_images = self.Stage1_generator(text, noise, training=True)
+            print('generated image shape: {}'.format(generated_images.shape))
             real_output = self.Stage1_discriminator(text, images_1, training=True)
             fake_output1 = self.Stage1_discriminator(text, generated_images, training=True)
             fake_text = text_generator(images_1.shape[0])
             fake_text = self.embedding(fake_text)
             fake_output2 = self.Stage1_discriminator(fake_text, images_1, training=True)
+            print('real output shape: {}\n fake output1 shape:{}\n fake output2 shape: {}'.format(real_output, fake_output1, fake_output2))
 
             disc_loss, real_loss, fake_loss1, fake_loss2 = self.discriminator_loss(real_output, fake_output1, fake_output2)
             gen_loss = self.generator_loss(fake_output1)
 
-        gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables+self.embedding.trainable_variables)
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables+self.embedding.trainable_variables)
-        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables+self.embedding.trainable_variables))
+        gradients_of_generator = gen_tape.gradient(gen_loss, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables)
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables)
+        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables))
         self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                         self.discriminator.trainable_variables+self.embedding.trainable_variables))
+                                                         self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables))
 
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.Stage2_generator(text, generated_images, training=True)
@@ -60,13 +63,13 @@ class train_one_epoch():
             disc_loss, real_loss, fake_loss1, fake_loss2 = self.discriminator_loss(real_output, fake_output1, fake_output2)
             gen_loss = self.generator_loss(fake_output1)
 
-        gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables+self.embedding.trainable_variables)
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables+self.embedding.trainable_variables)
+        gradients_of_generator = gen_tape.gradient(gen_loss, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables)
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables)
         self.gen_loss(gen_loss)
         self.disc_loss(disc_loss)
-        self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables+self.embedding.trainable_variables))
+        self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables))
         self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                         self.discriminator.trainable_variables+self.embedding.trainable_variables))
+                                                         self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables))
     def train(self, epoch,  pic, text_generator):
         self.gen_loss.reset_states()
         self.disc_loss.reset_states()
