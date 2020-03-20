@@ -86,7 +86,7 @@ class Stage2_generator(tf.keras.Model):
     # print('text shape: {}'.format(text.shape))
     # print('x shape: {}'.format(x.shape))
     for i in range(len(self.conv_list)):
-          x = self.conv_list1[i](x)
+          x = self.conv_list[i](x)
 
     code = self.encoder(text_embedding)
     code = tf.expand_dims(code, axis=1)
@@ -96,7 +96,7 @@ class Stage2_generator(tf.keras.Model):
     x = tf.concat([x, image_text], axis=-1)
 
     for i in range(len(self.deconv_list)):
-      x = self.middle_layer_list1[i](x)
+      x = self.deconv_list[i](x)
     
     x = self.output_layer(x)
     return x
