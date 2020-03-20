@@ -33,17 +33,12 @@ class train_one_epoch():
             text0 = self.embedding(text_1)
             text1 = self.embedding(text_2)
             text = (text0 + text1)/2
-            print('image1 shape: {}, image2 shape: {}'.format(images_1.shape, images_2.shape))
-            print('text shape: {}'.format(text.shape))
             generated_images = self.Stage1_generator(text, noise, training=True)
-            print('generated image shape: {}'.format(generated_images.shape))
             real_output = self.Stage1_discriminator(text, images_1, training=True)
             fake_output1 = self.Stage1_discriminator(text, generated_images, training=True)
             fake_text = text_generator(images_1.shape[0])
             fake_text = self.embedding(fake_text)
-            print('fake text shape: {}'.format(fake_text.shape))
             fake_output2 = self.Stage1_discriminator(fake_text, images_1, training=True)
-            print('real output shape: {}\n fake output1 shape:{}\n fake output2 shape: {}'.format(real_output, fake_output1, fake_output2))
 
             disc_loss, real_loss, fake_loss1, fake_loss2 = self.discriminator_loss(real_output, fake_output1, fake_output2)
             gen_loss = self.generator_loss(fake_output1)
