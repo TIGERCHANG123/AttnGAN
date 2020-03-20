@@ -73,7 +73,7 @@ class oxford_102_flowers_dataset():
         img_2 = img_2/255 * 2 - 1
         return img_1, img_2, text_1, text_2
     def get_train_dataset(self):
-        train = tf.data.Dataset.from_generator(self.generator, output_types=(tf.int64, tf.float32, tf.float32))
+        train = tf.data.Dataset.from_generator(self.generator, output_types=(tf.int64, tf.int64, tf.float32, tf.float32))
         train = train.map(self.parse).shuffle(1000).batch(self.batch_size)
         return train
     def get_random_text(self, batch_size):
