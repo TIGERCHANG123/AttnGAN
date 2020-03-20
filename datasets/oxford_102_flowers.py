@@ -65,7 +65,7 @@ class oxford_102_flowers_dataset():
             text_code2 = np.zeros((self.max_seq_length,), dtype='float32')
             for i, token in enumerate(text1.split(' ')):
                 text_code2[i]=self.token_index[token]
-            yield img_1, img_2, text_code1, text_code2
+            yield img_2, img_1, text_code1, text_code2
     def parse(self, img_1, img_2, text_1, text_2):
         img_1 = tf.cast(img_1, tf.float32)
         img_1 = img_1/255 * 2 - 1
