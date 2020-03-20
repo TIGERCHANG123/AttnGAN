@@ -82,7 +82,7 @@ class Stage2_generator(tf.keras.Model):
     ]
 
     self.output_layer = generator_Output(image_depth=3, strides=2, padding='same')#3*32*32
-  def call(self, text_embedding, noise):
+  def call(self, text_embedding, x):
     # print('text shape: {}'.format(text.shape))
     # print('x shape: {}'.format(x.shape))
     for i in range(len(self.conv_list)):
