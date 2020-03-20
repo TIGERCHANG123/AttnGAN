@@ -40,6 +40,7 @@ class train_one_epoch():
             fake_output1 = self.Stage1_discriminator(text, generated_images, training=True)
             fake_text = text_generator(images_1.shape[0])
             fake_text = self.embedding(fake_text)
+            print('fake text shape: {}'.format(fake_text.shape))
             fake_output2 = self.Stage1_discriminator(fake_text, images_1, training=True)
             print('real output shape: {}\n fake output1 shape:{}\n fake output2 shape: {}'.format(real_output, fake_output1, fake_output2))
 
