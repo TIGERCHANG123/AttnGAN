@@ -52,7 +52,7 @@ class oxford_102_flowers_dataset():
             img = cv2.resize(img, (self.image_width, self.image_width), interpolation=cv2.INTER_AREA)
             b, g, r = cv2.split(img)
             img_1 = cv2.merge([r, g, b])
-            img_2 = cv2.resize(img_1, (self.image_width/2, self.image_width/2), interpolation=cv2.INTER_AREA)
+            img_2 = cv2.resize(img_1, (int(self.image_width/2), int(self.image_width/2)), interpolation=cv2.INTER_AREA)
             # print('index: {}, len sentences: {}'.format(index, len(self.index_sentences)))
             n = np.random.randint(len(self.index_sentences[index]))
             text1 = self.index_sentences[index][n]
