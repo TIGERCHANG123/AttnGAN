@@ -5,8 +5,7 @@ import tensorflow.keras.backend as K
 class train_one_epoch():
     def __init__(self, model, train_dataset, optimizers, metrics, noise_dim, gp):
         self.Stage1_generator, self.Stage1_discriminator, self.Stage2_generator, self.Stage2_discriminator, self.embedding = model
-        self.Stage1_generator_optimizer, self.Stage1_discriminator_optimizer, 
-        self.Stage2_generator_optimizer, self.Stage2_discriminator_optimizer = optimizers
+        self.Stage1_generator_optimizer, self.Stage1_discriminator_optimizer, self.Stage2_generator_optimizer, self.Stage2_discriminator_optimizer = optimizers
 
         self.gen_loss, self.disc_loss = metrics
         self.train_dataset = train_dataset
