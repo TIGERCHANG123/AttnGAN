@@ -33,6 +33,7 @@ class train_one_epoch():
             text0 = self.embedding(text_1)
             text1 = self.embedding(text_2)
             text = (text0 + text1)/2
+            print('image1 shape: {}, image2 shape: {}'.format(images_1.shape, images_2.shape))
             print('text shape: {}'.format(text.shape))
             generated_images = self.Stage1_generator(text, noise, training=True)
             print('generated image shape: {}'.format(generated_images.shape))
