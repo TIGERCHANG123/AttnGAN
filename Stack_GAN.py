@@ -74,10 +74,10 @@ class Stage2_generator(tf.keras.Model):
       generator_conv(filters=128, strides=2, padding='same'),
     ]
     self.res_list = [
-      Resdual_Block(128),
-      Resdual_Block(128),
-      Resdual_Block(128),
-      Resdual_Block(128),
+      Resdual_Block(256),
+      Resdual_Block(256),
+      Resdual_Block(256),
+      Resdual_Block(256),
     ]
 
     self.deconv_list = [

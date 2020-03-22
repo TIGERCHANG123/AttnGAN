@@ -50,7 +50,7 @@ class Resdual_Block(tf.keras.Model):
       y = self.bn1(y)
       y = self.Relu1(y)
       y = self.conv2(y)
-      y = self.bn(y)
+      y = self.bn2(y)
       y = y + x
       y = self.Relu2(y)
       return y

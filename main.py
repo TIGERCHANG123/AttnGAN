@@ -11,16 +11,16 @@ from datasets.oxford_102_flowers import oxford_102_flowers_dataset
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
-# root = '/home/tigerc'
-root = '/content/drive/My Drive'
-dataset_root = '/content'
-# dataset_root = '/home/tigerc'
+root = '/home/tigerc'
+# root = '/content/drive/My Drive'
+# dataset_root = '/content'
+dataset_root = '/home/tigerc'
 temp_root = root+'/temp'
 
 def main(continue_train, train_time, train_epoch):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
     noise_dim = 100
-    batch_size = 64
+    batch_size = 48
 
     dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
     [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], embedding_model, model_name = get_gan(dataset.num_tokens)

@@ -29,7 +29,8 @@ class train_one_epoch():
         return cross_entropy(tf.ones_like(fake_output), fake_output)
 
     def train_step(self, noise, images_1, images_2, text_1, text_2, text_generator):
-        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+        with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, \
+                tf.GradientTape() as Stage2_gen_tape, tf.GradientTape() as Stage2_disc_tape:
             text0 = self.embedding(text_1)
             text1 = self.embedding(text_2)
             text = (text0 + text1)/2
@@ -40,16 +41,10 @@ class train_one_epoch():
             fake_text = self.embedding(fake_text)
             fake_output2 = self.Stage1_discriminator(fake_text, images_1, training=True)
 
-            disc_loss, real_loss, fake_loss1, fake_loss2 = self.discriminator_loss(real_output, fake_output1, fake_output2)
-            gen_loss = self.generator_loss(fake_output1)
+            Stage1_disc_loss, Stage1_real_loss, Stage1_fake_loss1, Stage1_fake_loss2 \
+                = self.discriminator_loss(real_output, fake_output1, fake_output2)
+            Stage1_gen_loss = self.generator_loss(fake_output1)
 
-        gradients_of_generator = gen_tape.gradient(gen_loss, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables)
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables)
-        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables))
-        self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                         self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables))
-
-        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.Stage2_generator(text, generated_images, training=True)
             real_output = self.Stage2_discriminator(text, images_2, training=True)
             fake_output1 = self.Stage2_discriminator(text, generated_images, training=True)
@@ -57,13 +52,21 @@ class train_one_epoch():
             fake_text = self.embedding(fake_text)
             fake_output2 = self.Stage2_discriminator(fake_text, images_2, training=True)
 
-            disc_loss, real_loss, fake_loss1, fake_loss2 = self.discriminator_loss(real_output, fake_output1, fake_output2)
-            gen_loss = self.generator_loss(fake_output1)
+            Stage2_disc_loss, Stage2_real_loss, Stage2_fake_loss1, Stage2_fake_loss2 \
+                = self.discriminator_loss(real_output, fake_output1, fake_output2)
+            Stage2_gen_loss = self.generator_loss(fake_output1)
 
-        gradients_of_generator = gen_tape.gradient(gen_loss, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables)
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables)
-        self.gen_loss(gen_loss)
-        self.disc_loss(disc_loss)
+
+        gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables)
+        gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss, self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables)
+        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables))
+        self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
+                                                         self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables))
+
+        gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables)
+        gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables)
+        self.gen_loss(Stage2_gen_loss)
+        self.disc_loss(Stage2_disc_loss)
         self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables))
         self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
                                                          self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables))
