@@ -12,16 +12,15 @@ class Stage1_generator(tf.keras.Model):
   def __init__(self):
     super(Stage1_generator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
-    self.input_layer = generator_Input(shape=[4, 4, 1024])
+    self.input_layer = generator_Input(shape=[4, 4, 512])
 
     self.middle_layer_list = [
-      # generator_Middle(filters=1024, strides=2, padding='same'),  # 1024*4*4
-      generator_Middle(filters=512, strides=2, padding='same'),#1024*4*4
-      generator_Middle(filters=256, strides=2, padding='same'),#512*8*8
-      generator_Middle(filters=128, strides=2, padding='same'),#256*16*16
+      generator_deconv(filters=256, strides=2, padding='same'),#1024*4*4
+      generator_deconv(filters=128, strides=2, padding='same'),#512*8*8
+      generator_deconv(filters=64, strides=2, padding='same'),#256*16*16
     ]
 
-    self.output_layer = generator_Output(image_depth=3, strides=2, padding='same')#3*32*32
+    self.output_layer = generator_Output(image_depth=3, strides=2, padding='same')#3*64*64
   def call(self, text_embedding, noise):
     x = self.encoder(text_embedding)
     x = tf.concat([noise, x], axis=-1)
@@ -35,14 +34,14 @@ class Stage1_discriminator(tf.keras.Model):
   def __init__(self):
     super(Stage1_discriminator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
-    self.input_layer = discriminator_Input(filters=128, strides=1)
+    self.input_layer = discriminator_Input(filters=64, strides=1)
     self.middle_layer_list1 = [
+      discriminator_Middle(kernel_size=5, filters=128, strides=2, padding='valid'),
       discriminator_Middle(kernel_size=5, filters=256, strides=2, padding='valid'),
-      discriminator_Middle(kernel_size=5, filters=512, strides=2, padding='valid'),
     ]
     self.middle_layer_list2 = [
-      discriminator_Middle(kernel_size=1, filters=1024, strides=2, padding='valid'),
-      discriminator_Middle(kernel_size=5, filters=1024, strides=2, padding='valid'),
+      discriminator_Middle(kernel_size=1, filters=256, strides=2, padding='valid'),
+      discriminator_Middle(kernel_size=5, filters=512, strides=2, padding='valid'),
     ]
     self.output_layer = discriminator_Output(with_activation=False)
 
@@ -71,14 +70,19 @@ class Stage2_generator(tf.keras.Model):
     self.encoder = Encoder(latent_dim=128)
     
     self.conv_list = [
-      discriminator_Middle(kernel_size=5, filters=256, strides=2, padding='valid'),
-      discriminator_Middle(kernel_size=5, filters=512, strides=2, padding='valid'),
+      generator_conv(filters=64, strides=2, padding='same'),
+      generator_conv(filters=128, strides=2, padding='same'),
     ]
+    self.res_list = [
+      Resdual_Block(128),
+      Resdual_Block(128),
+      Resdual_Block(128),
+      Resdual_Block(128),
+    ]
+
     self.deconv_list = [
-      # generator_Middle(filters=1024, strides=2, padding='same'),  # 1024*4*4
-      generator_Middle(filters=512, strides=2, padding='same'),#1024*4*4
-      generator_Middle(filters=256, strides=2, padding='same'),#512*8*8
-      generator_Middle(filters=128, strides=2, padding='same'),#256*16*16
+      generator_deconv(filters=128, strides=2, padding='same'),#1024*4*4
+      generator_deconv(filters=64, strides=2, padding='same'),#512*8*8
     ]
 
     self.output_layer = generator_Output(image_depth=3, strides=2, padding='same')#3*32*32
@@ -95,6 +99,8 @@ class Stage2_generator(tf.keras.Model):
     image_text = ones * code
     x = tf.concat([x, image_text], axis=-1)
 
+    for i in range(len(self.res_list)):
+      x = self.res_list[i](x)
     for i in range(len(self.deconv_list)):
       x = self.deconv_list[i](x)
     
@@ -105,13 +111,14 @@ class Stage2_discriminator(tf.keras.Model):
   def __init__(self):
     super(Stage2_discriminator, self).__init__()
     self.encoder = Encoder(latent_dim=128)
-    self.input_layer = discriminator_Input(filters=128, strides=1)
+    self.input_layer = discriminator_Input(filters=64, strides=1)
     self.middle_layer_list1 = [
+      discriminator_Middle(kernel_size=5, filters=128, strides=2, padding='valid'),
       discriminator_Middle(kernel_size=5, filters=256, strides=2, padding='valid'),
       discriminator_Middle(kernel_size=5, filters=512, strides=2, padding='valid'),
     ]
     self.middle_layer_list2 = [
-      discriminator_Middle(kernel_size=1, filters=1024, strides=2, padding='valid'),
+      discriminator_Middle(kernel_size=1, filters=512, strides=2, padding='valid'),
       discriminator_Middle(kernel_size=5, filters=1024, strides=2, padding='valid'),
     ]
     self.output_layer = discriminator_Output(with_activation=False)
