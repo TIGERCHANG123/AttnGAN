@@ -54,26 +54,22 @@ class oxford_102_flowers_dataset():
             img_1 = cv2.merge([r, g, b])
             img_2 = cv2.resize(img_1, (int(self.image_width/2), int(self.image_width/2)), interpolation=cv2.INTER_AREA)
             # print('index: {}, len sentences: {}'.format(index, len(self.index_sentences)))
-            n = np.random.randint(len(self.index_sentences[index]))
-            text1 = self.index_sentences[index][n]
-            text_code1 = np.zeros((self.max_seq_length,), dtype='float32')
-            for i, token in enumerate(text1.split(' ')):
-                text_code1[i]=self.token_index[token]
 
+            text_code_list = []
             n = np.random.randint(len(self.index_sentences[index]))
-            text2 = self.index_sentences[index][n]
-            text_code2 = np.zeros((self.max_seq_length,), dtype='float32')
-            for i, token in enumerate(text1.split(' ')):
-                text_code2[i]=self.token_index[token]
-            yield img_2, img_1, text_code1, text_code2
-    def parse(self, img_1, img_2, text_1, text_2):
+            text = self.index_sentences[index][n]
+            text_code = np.zeros((self.max_seq_length,), dtype='float32')
+            for i, token in enumerate(text.split(' ')):
+                text_code[i] = self.token_index[token]
+            yield img_2, img_1, text_code
+    def parse(self, img_1, img_2, text):
         img_1 = tf.cast(img_1, tf.float32)
         img_1 = img_1/255 * 2 - 1
         img_2 = tf.cast(img_2, tf.float32)
         img_2 = img_2/255 * 2 - 1
-        return img_1, img_2, text_1, text_2
+        return img_1, img_2, text
     def get_train_dataset(self):
-        train = tf.data.Dataset.from_generator(self.generator, output_types=(tf.int64, tf.int64, tf.float32, tf.float32))
+        train = tf.data.Dataset.from_generator(self.generator, output_types=(tf.int64, tf.int64, tf.float32))
         train = train.map(self.parse).shuffle(1000).batch(self.batch_size)
         return train
     def get_random_text(self, batch_size):
@@ -91,8 +87,9 @@ class oxford_102_flowers_dataset():
     def text_decoder(self, code):
         s = []
         for i in range(len(code)):
-            c = int(code[i])
-            s.append(self.index_token[c])
+            if code[i] != 0:
+                c = int(code[i])
+                s.append(self.index_token[c])
         s = ' '.join(s)
         return s
 class noise_generator():

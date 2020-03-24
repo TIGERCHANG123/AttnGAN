@@ -142,6 +142,8 @@ class Stage2_discriminator(tf.keras.Model):
     return x
 
 def get_gan(num_tokens):
+  Dense_u = tf.keras.layers.Dense(256, activation=tf.keras.layers.LeakyReLU(alpha=0.2))
+  Dense_sigma = tf.keras.layers.Dense(256, activation=tf.keras.layers.LeakyReLU(alpha=0.2))
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256)
   Stage1_Generator = Stage1_generator()
   Stage1_Discriminator = Stage1_discriminator()
@@ -149,7 +151,7 @@ def get_gan(num_tokens):
   Stage2_Discriminator = Stage2_discriminator()
   Generator = [Stage1_Generator, Stage2_Generator]
   Discriminator = [Stage1_Discriminator, Stage2_Discriminator]
-  gen_name = 'Stack_GAN'
-  return Generator, Discriminator, Embedding, gen_name
+  gen_name = 'Stack_GAN_Normal'
+  return Generator, Discriminator, Embedding, Dense_u, Dense_sigma, gen_name
 
 

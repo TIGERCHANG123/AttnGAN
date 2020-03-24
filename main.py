@@ -23,7 +23,8 @@ def main(continue_train, train_time, train_epoch):
     batch_size = 48
 
     dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
-    [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], embedding_model, model_name = get_gan(dataset.num_tokens)
+    [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], \
+    embedding_model, Dense_u_model, Dense_sigma_model, model_name = get_gan(dataset.num_tokens)
 
     model_dataset = model_name + '-' + dataset.name
 
@@ -39,7 +40,8 @@ def main(continue_train, train_time, train_epoch):
     Stage1_discriminator_optimizer=Stage1_discriminator_optimizer,
     Stage1_generator=Stage1_generator, Stage1_discriminator=Stage1_discriminator, 
     Stage2_genetator_optimizer=Stage2_generator_optimizer, Stage2_discriminator_optimizer=Stage2_discriminator_optimizer,
-    Stage2_generator=Stage2_generator, Stage2_discriminator=Stage2_discriminator, embedding=embedding_model)
+    Stage2_generator=Stage2_generator, Stage2_discriminator=Stage2_discriminator,
+    embedding=embedding_model, Dense_u_model=Dense_u_model, Dense_sigma_model=Dense_sigma_model)
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=2)
     if ckpt_manager.latest_checkpoint and continue_train:
@@ -49,19 +51,20 @@ def main(continue_train, train_time, train_epoch):
     gen_loss = tf.keras.metrics.Mean(name='gen_loss')
     disc_loss = tf.keras.metrics.Mean(name='disc_loss')
 
-    train = train_one_epoch(model=[Stage1_generator, Stage1_discriminator, Stage2_generator, Stage2_discriminator, embedding_model], 
+    train = train_one_epoch(model=[Stage1_generator, Stage1_discriminator, Stage2_generator
+        , Stage2_discriminator, embedding_model, Dense_u_model, Dense_sigma_model],
               optimizers=[Stage1_generator_optimizer, Stage1_discriminator_optimizer, Stage2_generator_optimizer, Stage2_discriminator_optimizer],
               train_dataset=train_dataset, metrics=[gen_loss, disc_loss], noise_dim=noise_dim, gp=20)
 
-    # pic.save_created_pic(generator_model, 8, noise_dim, 0, dataset.get_random_text, dataset.text_decoder)
-    # pic.show_created_pic(generator_model, 8, noise_dim, dataset.get_random_text, dataset.text_decoder)
+    # pic.save_created_pic([Stage1_generator, Stage2_generator, embedding_model],
+    #                      8, noise_dim, 0, dataset.get_random_text, dataset.text_decoder)
     for epoch in range(train_epoch):
         train.train(epoch=epoch, pic=pic, text_generator=dataset.get_random_text)
         pic.show()
         if (epoch + 1) % 5 == 0:
             ckpt_manager.save()
         pic.save_created_pic([Stage1_generator, Stage2_generator, embedding_model], 
-        8, noise_dim, epoch, dataset.get_random_text, dataset.text_decoder)
+            8, noise_dim, epoch, dataset.get_random_text, dataset.text_decoder)
     pic.show_created_pic([Stage1_generator, Stage2_generator, embedding_model], 
     8, noise_dim, dataset.get_random_text, dataset.text_decoder)
 
