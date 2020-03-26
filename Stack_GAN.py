@@ -22,6 +22,7 @@ class Stage1_generator(tf.keras.Model):
 
     self.output_layer = generator_Output(image_depth=3, strides=2, padding='same')#3*64*64
   def call(self, text_embedding, noise):
+    # print('Stage1 text embedding shape: {}, noise shape{}'.format(text_embedding.shape, noise.shape))
     x = self.encoder(text_embedding)
     x = tf.concat([noise, x], axis=-1)
     x = self.input_layer(x)
@@ -141,9 +142,21 @@ class Stage2_discriminator(tf.keras.Model):
     x = self.output_layer(x)
     return x
 
+class generate_condition(tf.keras.Model):
+  def __init__(self, units):
+    super(generate_condition, self).__init__()
+    self.units = units
+    self.flatten = tf.keras.layers.Flatten()
+    self.Dense = tf.keras.layers.Dense(units)
+    self.leakyRelu = tf.keras.layers.LeakyReLU(alpha=0.2)
+  def call(self, x):
+    x = self.flatten(x)
+    x = self.Dense(x)
+    x = self.leakyRelu(x)
+    return x[:, :int(self.units/2)], x[:, int(self.units/2):]
+
 def get_gan(num_tokens):
-  Dense_u = tf.keras.layers.Dense(256, activation=tf.keras.layers.LeakyReLU(alpha=0.2))
-  Dense_sigma = tf.keras.layers.Dense(256, activation=tf.keras.layers.LeakyReLU(alpha=0.2))
+  Dense_mu_sigma = generate_condition(256*2)
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256)
   Stage1_Generator = Stage1_generator()
   Stage1_Discriminator = Stage1_discriminator()
@@ -152,6 +165,6 @@ def get_gan(num_tokens):
   Generator = [Stage1_Generator, Stage2_Generator]
   Discriminator = [Stage1_Discriminator, Stage2_Discriminator]
   gen_name = 'Stack_GAN_Normal'
-  return Generator, Discriminator, Embedding, Dense_u, Dense_sigma, gen_name
+  return Generator, Discriminator, Embedding, Dense_mu_sigma, gen_name
 
 

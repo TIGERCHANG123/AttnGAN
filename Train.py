@@ -5,7 +5,7 @@ import tensorflow.keras.backend as K
 class train_one_epoch():
     def __init__(self, model, train_dataset, optimizers, metrics, noise_dim, gp):
         self.Stage1_generator, self.Stage1_discriminator, self.Stage2_generator, self.Stage2_discriminator\
-            , self.embedding, self.Dense_u, self.Dense_sigma = model
+            , self.embedding, self.Dense_mu_sigma = model
         self.Stage1_generator_optimizer, self.Stage1_discriminator_optimizer, self.Stage2_generator_optimizer, self.Stage2_discriminator_optimizer = optimizers
 
         self.gen_loss, self.disc_loss = metrics
@@ -22,7 +22,7 @@ class train_one_epoch():
         real_loss = cross_entropy(tf.ones_like(real_output), real_output)
         fake_loss1 = cross_entropy(tf.zeros_like(fake_output1), fake_output1)
         fake_loss2 = cross_entropy(tf.zeros_like(fake_output2), fake_output2)
-        total_loss = real_loss + fake_loss1 + fake_loss2
+        total_loss = real_loss + (fake_loss1 + fake_loss2)/2
         return total_loss, real_loss, fake_loss1, fake_loss2
 
     def generator_loss(self, fake_output):
@@ -38,9 +38,8 @@ class train_one_epoch():
         with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, \
                 tf.GradientTape() as Stage2_gen_tape, tf.GradientTape() as Stage2_disc_tape:
             embedding_code = self.embedding(text)
-            mu_1 = self.Dense_u(embedding_code)
-            sigma_1 = self.Dense_sigma(embedding_code)
-            KL_loss = self.KL_loss(mu_1, sigma_1)
+            mu_1, sigma_1 = self.Dense_mu_sigma(embedding_code)
+            Stage1_KL_loss = self.KL_loss(mu_1, sigma_1)
             epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
             stddev = tf.exp(sigma_1)
             text = mu_1 + stddev * epsilon
@@ -53,11 +52,13 @@ class train_one_epoch():
 
             Stage1_disc_loss, Stage1_real_loss, Stage1_fake_loss1, Stage1_fake_loss2 \
                 = self.discriminator_loss(real_output, fake_output1, fake_output2)
-            Stage1_gen_loss = self.generator_loss(fake_output1) + KL_loss
+            Stage1_gen_loss = self.generator_loss(fake_output1) + Stage1_KL_loss
 
-            epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
-            stddev = tf.exp(sigma_1)
-            text = mu_1 + stddev * epsilon
+            mu_2, sigma_2 = self.Dense_mu_sigma(embedding_code)
+            Stage2_KL_loss = self.KL_loss(mu_2, sigma_2)
+            epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_2))
+            stddev = tf.exp(sigma_2)
+            text = mu_2 + stddev * epsilon
             generated_images = self.Stage2_generator(text, generated_images, training=True)
             real_output = self.Stage2_discriminator(embedding_code, images_2, training=True)
             fake_output1 = self.Stage2_discriminator(embedding_code, generated_images, training=True)
@@ -67,21 +68,42 @@ class train_one_epoch():
 
             Stage2_disc_loss, Stage2_real_loss, Stage2_fake_loss1, Stage2_fake_loss2 \
                 = self.discriminator_loss(real_output, fake_output1, fake_output2)
-            Stage2_gen_loss = self.generator_loss(fake_output1) + KL_loss
+            Stage2_gen_loss = self.generator_loss(fake_output1) + Stage2_KL_loss
 
-        gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables)
-        gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss, self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables)
-        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage1_generator.trainable_variables+self.embedding.trainable_variables))
+        gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss,
+                                                          self.Stage1_generator.trainable_variables+
+                                                          self.embedding.trainable_variables+
+                                                          self.Dense_mu_sigma.trainable_variables
+                                                          )
+        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator,
+                                                            self.Stage1_generator.trainable_variables+
+                                                            self.embedding.trainable_variables+
+                                                            self.Dense_mu_sigma.trainable_variables))
+        gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,
+                                                               self.Stage1_discriminator.trainable_variables +
+                                                               self.embedding.trainable_variables)
         self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                         self.Stage1_discriminator.trainable_variables+self.embedding.trainable_variables))
+                                                                self.Stage1_discriminator.trainable_variables+
+                                                                self.embedding.trainable_variables))
 
-        gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables)
-        gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables)
+        gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss,
+                                                          self.Stage2_generator.trainable_variables+
+                                                          # self.embedding.trainable_variables +
+                                                          self.Dense_mu_sigma.trainable_variables
+                                                          )
+        self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator,
+                                                            self.Stage2_generator.trainable_variables+
+                                                            # self.embedding.trainable_variables +
+                                                            self.Dense_mu_sigma.trainable_variables))
+        gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss,
+                                                               # self.embedding.trainable_variables +
+                                                               self.Stage2_discriminator.trainable_variables)
+        self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
+                                                                # self.embedding.trainable_variables+
+                                                                self.Stage2_discriminator.trainable_variables))
+
         self.gen_loss(Stage2_gen_loss)
         self.disc_loss(Stage2_disc_loss)
-        self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, self.Stage2_generator.trainable_variables+self.embedding.trainable_variables))
-        self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                         self.Stage2_discriminator.trainable_variables+self.embedding.trainable_variables))
     def train(self, epoch,  pic, text_generator):
         self.gen_loss.reset_states()
         self.disc_loss.reset_states()
@@ -92,5 +114,5 @@ class train_one_epoch():
             pic.add([self.gen_loss.result().numpy(), self.disc_loss.result().numpy()])
             pic.save()
             if batch % 100 == 0:
-                print('epoch: {}, gen loss: {}, disc loss: {}, grad penalty: {}, real loss: {}, fake loss: {}'
-                      .format(epoch, self.gen_loss.result(), self.disc_loss.result(), self.grad_penalty, self.real_loss, self.fake_loss))
+                print('epoch: {}, gen loss: {}, disc loss: {}'
+                      .format(epoch, self.gen_loss.result(), self.disc_loss.result()))

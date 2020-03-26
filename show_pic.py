@@ -101,7 +101,7 @@ class draw:
     return
 
   def save_created_pic(self, models, pic_num, noise_dim, epoch, text_generator, text_decoder):
-    Stage1_generator, Stage2_generator, embedding = models
+    Stage1_generator, Stage2_generator, embedding, Dense_mu_sigma = models
     text = text_generator(pic_num)
     sentence = []
     for i in range(text.shape[0]):
@@ -112,9 +112,13 @@ class draw:
     x = tf.convert_to_tensor(np.random.rand(pic_num, noise_dim), dtype=tf.float32)
     # print('x type: {}'.format(x.dtype))
     # print('text type: {}'.format(text.dtype))
-    text = embedding(text)
-    y1 = Stage1_generator(text, x)
-    y = Stage2_generator(text, y1)
+    embedding_code = embedding(text)
+    mu_1, sigma_1 = Dense_mu_sigma(embedding_code)
+    # epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
+    # stddev = tf.exp(sigma_1)
+    # text = mu_1 + stddev * epsilon
+    y1 = Stage1_generator(mu_1, x)
+    y = Stage2_generator(mu_1, y1)
     y=tf.squeeze(y)
     y = (y + 1) / 2
     for i in range(pic_num):

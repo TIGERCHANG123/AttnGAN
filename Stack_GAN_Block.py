@@ -7,10 +7,6 @@ class Encoder(tf.keras.Model):
     def __init__(self, latent_dim):
         super(Encoder, self).__init__()
         self.flatten = layers.Flatten()
-        # self.gru = layers.GRU(self.enc_units,
-        #                                return_sequences=True,
-        #                                return_state=True,
-        #                                recurrent_initializer='glorot_uniform')
         self.dense = layers.Dense(latent_dim)
         self.leakyRelu = layers.LeakyReLU(alpha=0.2)
 
