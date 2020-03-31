@@ -54,7 +54,7 @@ class CUB_dataset():
                 img_1 = cv2.merge([r, g, b])
                 img_2 = cv2.resize(img_1, (int(self.image_width/2), int(self.image_width/2)), interpolation=cv2.INTER_AREA)
                 try:
-                    with open('{}/{}.txt}'.format(self.attribute_path, name), 'r', encoding='utf-8') as f:
+                    with open('{}/{}.txt'.format(self.attribute_path, name), 'r', encoding='utf-8') as f:
                         temp_lines = f.read().split('\n')
                 except:
                     continue

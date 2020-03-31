@@ -156,7 +156,8 @@ class generate_condition(tf.keras.Model):
     return x[:, :int(self.units/2)], x[:, int(self.units/2):]
 
 def get_gan(num_tokens):
-  Dense_mu_sigma = generate_condition(256*2)
+  Stage1_Dense_mu_sigma = generate_condition(256*2)
+  Stage2_Dense_mu_sigma = generate_condition(256 * 2)
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256)
   Stage1_Generator = Stage1_generator()
   Stage1_Discriminator = Stage1_discriminator()
@@ -164,7 +165,7 @@ def get_gan(num_tokens):
   Stage2_Discriminator = Stage2_discriminator()
   Generator = [Stage1_Generator, Stage2_Generator]
   Discriminator = [Stage1_Discriminator, Stage2_Discriminator]
-  gen_name = 'Stack_GAN_Normal'
-  return Generator, Discriminator, Embedding, Dense_mu_sigma, gen_name
+  gen_name = 'Stack_GAN_Part_Train_2'
+  return Generator, Discriminator, Embedding, Stage1_Dense_mu_sigma, Stage2_Dense_mu_sigma, gen_name
 
 

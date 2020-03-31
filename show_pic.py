@@ -100,8 +100,8 @@ class draw:
     plt.show()
     return
 
-  def save_created_pic(self, models, pic_num, noise_dim, epoch, text_generator, text_decoder):
-    Stage1_generator, Stage2_generator, embedding, Dense_mu_sigma = models
+  def save_created_pic(self, models, pic_num, noise_dim, epoch, mid_epoch, text_generator, text_decoder):
+    Stage1_generator, Stage2_generator, embedding, Stage1_Dense_mu_sigma, Stage2_Dense_mu_sigma = models
     text = text_generator(pic_num)
     sentence = []
     for i in range(text.shape[0]):
@@ -113,13 +113,20 @@ class draw:
     # print('x type: {}'.format(x.dtype))
     # print('text type: {}'.format(text.dtype))
     embedding_code = embedding(text)
-    mu_1, sigma_1 = Dense_mu_sigma(embedding_code)
-    # epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
-    # stddev = tf.exp(sigma_1)
-    # text = mu_1 + stddev * epsilon
-    y1 = Stage1_generator(mu_1, x)
-    y = Stage2_generator(mu_1, y1)
-    y=tf.squeeze(y)
+    mu_1, sigma_1 = Stage1_Dense_mu_sigma(embedding_code)
+    epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
+    stddev = tf.exp(sigma_1)
+    text1 = mu_1 + stddev * epsilon
+    y1 = Stage1_generator(text1, x)
+    if epoch < mid_epoch:
+      y=tf.squeeze(y1)
+    else:
+      mu_2, sigma_2 = Stage1_Dense_mu_sigma(embedding_code)
+      epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_2))
+      stddev = tf.exp(sigma_2)
+      text2 = mu_2 + stddev * epsilon
+      y = Stage2_generator(text2, y1)
+      y=tf.squeeze(y)
     y = (y + 1) / 2
     for i in range(pic_num):
       plt.imsave(self.generated_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]), y[i].numpy())
