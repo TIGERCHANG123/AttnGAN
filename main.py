@@ -8,6 +8,7 @@ from show_pic import draw
 import fid
 from Train import train_one_epoch
 from datasets.oxford_102_flowers import oxford_102_flowers_dataset
+from datasets.CUB import CUB_dataset
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
@@ -22,7 +23,8 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     noise_dim = 100
     batch_size = 48
 
-    dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
+    # dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
+    dataset = CUB_dataset(dataset_root,batch_size = batch_size)
     [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], \
     embedding_model, Stage1_Dense_mu_sigma_model, Stage2_Dense_mu_sigma_model, model_name = get_gan(dataset.num_tokens)
 

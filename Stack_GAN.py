@@ -4,6 +4,7 @@ class embedding(tf.keras.Model):
   def __init__(self, num_encoder_tokens, embedding_dim):
     super(embedding, self).__init__()
     self.embedding = layers.Embedding(num_encoder_tokens, embedding_dim)
+
   def call(self, text):
     code = self.embedding(text)
     return code

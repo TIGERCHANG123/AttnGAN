@@ -6,15 +6,11 @@ from tensorflow.keras.initializers import *
 class Encoder(tf.keras.Model):
     def __init__(self, latent_dim):
         super(Encoder, self).__init__()
-        self.flatten = layers.Flatten()
-        self.dense = layers.Dense(latent_dim)
-        self.leakyRelu = layers.LeakyReLU(alpha=0.2)
+        self.lstm = layers.LSTM(units=latent_dim, return_sequences=True, return_state=True)
 
     def call(self, x):
-        x = self.flatten(x)
-        x = self.dense(x)
-        x = self.leakyRelu(x)
-        return x
+        whole_sequence_output, final_memory_state, final_carry_state = self.lstm(x)
+        return final_carry_state
 
 class generator_Input(tf.keras.Model):
   def __init__(self, shape):
