@@ -94,18 +94,20 @@ class draw:
     x = tf.convert_to_tensor(np.random.rand(pic_num, noise_dim), dtype=tf.float32)
     # print('x type: {}'.format(x.dtype))
     # print('text type: {}'.format(text.dtype))
-    embedding_code = embedding(text)
+    sequence, embedding_code = embedding(text)
     mu, sigma = Dense_mu_sigma(embedding_code)
     epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu))
     stddev = tf.exp(sigma)
     text1 = mu + stddev * epsilon
     # text1 = embedding_code
-    y0, y1 = Generator(text1, x)
+    y0, y1 = Generator(sequence, text1, x)
     y0=tf.squeeze(y0)
     y1=tf.squeeze(y1)
     y0 = (y0 + 1) / 2
     y1 = (y1+1)/2
     for i in range(pic_num):
-      cv2.imwrite(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]), y0[i].numpy())
-      cv2.imwrite(self.generated_small_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),y1[i].numpy())
+      cv2.imwrite(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),
+                  (y0[i].numpy()*255).astype(np.uint8))
+      cv2.imwrite(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),
+                  (y1[i].numpy()*255).astype(np.uint8))
     return
