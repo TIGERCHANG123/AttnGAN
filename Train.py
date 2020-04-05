@@ -36,19 +36,19 @@ class train_one_epoch():
     def train_step(self, noise, images_1, images_2, text, text_generator):
         with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, \
                 tf.GradientTape() as Stage2_gen_tape, tf.GradientTape() as Stage2_disc_tape:
-            embedding_code = self.embedding(text)
-            mu_1, sigma_1 = self.Dense_mu_sigma(embedding_code)
+            sequence, memory_state = self.embedding(text)
+            mu_1, sigma_1 = self.Dense_mu_sigma(memory_state)
             KL_loss = self.KL_loss(mu_1, sigma_1)
             epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
             stddev = tf.exp(sigma_1)
             text = mu_1 + stddev * epsilon
             # text = embedding_code
-            small_gen, large_gen = self.Generator(text, noise)
-            small_real, large_real = self.Discriminator(embedding_code, images_1, images_2)
-            small_fake1, large_fake1 = self.Discriminator(embedding_code, small_gen, large_gen)
+            small_gen, large_gen = self.Generator(sequence, text, noise)
+            small_real, large_real = self.Discriminator(memory_state, images_1, images_2)
+            small_fake1, large_fake1 = self.Discriminator(memory_state, small_gen, large_gen)
 
             fake_text = text_generator(images_1.shape[0])
-            fake_text = self.embedding(fake_text)
+            fake_sequence, fake_text = self.embedding(fake_text)
             small_fake2, large_fake2 = self.Discriminator(fake_text, small_gen, large_gen)
             # loss calculation
             Stage1_disc_loss, Stage1_real_loss, Stage1_fake_loss1, Stage1_fake_loss2 \

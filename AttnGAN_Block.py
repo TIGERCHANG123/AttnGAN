@@ -19,17 +19,24 @@ class Input(tf.keras.Model):
 
 class attention(tf.keras.Model):
   def __init__(self, units, name):
-    super(attention, self).__init()
+    super(attention, self).__init__()
     self.dense = layers.Dense(units=units, name=name+'_dense')
   def call(self, e, h):
-    e_ = self.dense(e)
+    # print('e shape', e.shape)
+    e_ = self.dense(tf.transpose(e, [0, 2, 1]))
+    e_ = tf.transpose(e_, [0, 2, 1])
+    # print('e_ shape', e_.shape)
     h1 = tf.transpose(h, [0, 3, 1, 2])
     h1 = tf.reshape(h1, [h1.shape[0], h1.shape[1], -1])
-    s = tf.matmul(h1, e_)
+    # print('h1 shape', h1.shape)
+    s = tf.matmul(tf.transpose(h1, [0, 2, 1]), e_)
+    # print('s shape', s.shape)
     beta = tf.nn.softmax(s, axis=2)
     c = tf.matmul(e_, tf.transpose(beta, [0, 2, 1]))
+    # print('c shape', c.shape)
     c = tf.reshape(c, h.shape)
     output = tf.concat([c, h], axis=3)
+    # print('attn output shape', output.shape)
     return output
 
 class Resdual_Block(tf.keras.Model):
