@@ -117,6 +117,7 @@ class draw:
     epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
     stddev = tf.exp(sigma_1)
     text1 = mu_1 + stddev * epsilon
+    # text1 = embedding_code
     y1 = Stage1_generator(text1, x)
     if epoch < mid_epoch:
       y=tf.squeeze(y1)
@@ -125,6 +126,7 @@ class draw:
       epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_2))
       stddev = tf.exp(sigma_2)
       text2 = mu_2 + stddev * epsilon
+      # text2 = embedding_code
       y = Stage2_generator(text2, y1)
       y=tf.squeeze(y)
     y = (y + 1) / 2
