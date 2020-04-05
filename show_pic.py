@@ -4,6 +4,7 @@ import numpy as np
 from time import sleep
 import os
 import tensorflow as tf
+import cv2
 
 class draw:
   batch_list = []
@@ -14,15 +15,18 @@ class draw:
     rcParams['figure.figsize']=pic_size, pic_size
     self.pic_path = root + '/temp_pic/' + model_dataset
     self.pic_save_path = root + '/temp_pic_save/' + model_dataset
-    self.generated_pic_path = root + '/generated_pic/' + model_dataset
+    self.generated_small_pic_path = root + '/generated_pic/' + model_dataset + '/small'
+    self.generated_large_pic_path = root + '/generated_pic/' + model_dataset + '/large'
     self.train_time = train_time
 
     if not (os.path.exists(self.pic_path)):
         os.makedirs(self.pic_path)
     if not (os.path.exists(self.pic_save_path)):
         os.makedirs(self.pic_save_path)
-    if not (os.path.exists(self.generated_pic_path)):
-        os.makedirs(self.generated_pic_path)
+    if not (os.path.exists(self.generated_small_pic_path)):
+        os.makedirs(self.generated_small_pic_path)
+    if not (os.path.exists(self.generated_large_pic_path)):
+      os.makedirs(self.generated_large_pic_path)
 
     self.fig = plt.figure(figsize=(12, 4))
     self.batch_list = []
@@ -78,30 +82,8 @@ class draw:
     plt.imshow(image)
     plt.show()
 
-  def show_created_pic(self, models, pic_num, noise_dim, text_generator, text_decoder):
-    Stage1_generator, Stage2_generator, embedding = models
-    text = text_generator(pic_num)
-    sentence = []
-    for i in range(text.shape[0]):
-      s = text_decoder(text[i])
-      s = s.split(' ')
-      s = '_'.join(s)
-      sentence.append(s)
-    x = tf.convert_to_tensor(np.random.rand(pic_num, noise_dim), dtype=tf.float32)
-    text = embedding(text)
-    y1 = Stage1_generator(text, x)
-    y = Stage2_generator(text, y1)
-    for i in range(pic_num):
-      plt.subplot(1, pic_num, i + 1)
-      y = (y + 1) / 2
-      plt.imshow(y[i].numpy())
-      plt.axis('off')
-      plt.tight_layout()
-    plt.show()
-    return
-
   def save_created_pic(self, models, pic_num, noise_dim, epoch, mid_epoch, text_generator, text_decoder):
-    Stage1_generator, Stage2_generator, embedding, Stage1_Dense_mu_sigma, Stage2_Dense_mu_sigma = models
+    Generator, Discriminator, embedding, Dense_mu_sigma = models
     text = text_generator(pic_num)
     sentence = []
     for i in range(text.shape[0]):
@@ -113,23 +95,17 @@ class draw:
     # print('x type: {}'.format(x.dtype))
     # print('text type: {}'.format(text.dtype))
     embedding_code = embedding(text)
-    mu_1, sigma_1 = Stage1_Dense_mu_sigma(embedding_code)
-    epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
-    stddev = tf.exp(sigma_1)
-    text1 = mu_1 + stddev * epsilon
+    mu, sigma = Dense_mu_sigma(embedding_code)
+    epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu))
+    stddev = tf.exp(sigma)
+    text1 = mu + stddev * epsilon
     # text1 = embedding_code
-    y1 = Stage1_generator(text1, x)
-    if epoch < mid_epoch:
-      y=tf.squeeze(y1)
-    else:
-      mu_2, sigma_2 = Stage1_Dense_mu_sigma(embedding_code)
-      epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_2))
-      stddev = tf.exp(sigma_2)
-      text2 = mu_2 + stddev * epsilon
-      # text2 = embedding_code
-      y = Stage2_generator(text2, y1)
-      y=tf.squeeze(y)
-    y = (y + 1) / 2
+    y0, y1 = Generator(text1, x)
+    y0=tf.squeeze(y0)
+    y1=tf.squeeze(y1)
+    y0 = (y0 + 1) / 2
+    y1 = (y1+1)/2
     for i in range(pic_num):
-      plt.imsave(self.generated_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]), y[i].numpy())
+      cv2.imwrite(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]), y0[i].numpy())
+      cv2.imwrite(self.generated_small_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),y1[i].numpy())
     return

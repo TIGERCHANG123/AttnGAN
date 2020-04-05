@@ -3,7 +3,7 @@ import os
 import getopt
 import sys
 import tensorflow as tf
-from Stack_GAN import get_gan
+from AttnGAN import get_gan
 from show_pic import draw
 import fid
 from Train import train_one_epoch
@@ -25,8 +25,7 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
 
     # dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
     dataset = CUB_dataset(dataset_root,batch_size = batch_size)
-    [Stage1_generator, Stage2_generator], [Stage1_discriminator, Stage2_discriminator], \
-    embedding_model, Stage1_Dense_mu_sigma_model, Stage2_Dense_mu_sigma_model, model_name = get_gan(dataset.num_tokens)
+    Dense_mu_sigma_model, embedding_model,  Generator, Discriminator, model_name = get_gan(dataset.num_tokens)
 
     model_dataset = model_name + '-' + dataset.name
 
@@ -40,10 +39,9 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     checkpoint_path = temp_root + '/temp_model_save/' + model_dataset
     ckpt = tf.train.Checkpoint(Stage1_genetator_optimizer=Stage1_generator_optimizer,
     Stage1_discriminator_optimizer=Stage1_discriminator_optimizer,
-    Stage1_generator=Stage1_generator, Stage1_discriminator=Stage1_discriminator,
     Stage2_genetator_optimizer=Stage2_generator_optimizer, Stage2_discriminator_optimizer=Stage2_discriminator_optimizer,
-    Stage2_generator=Stage2_generator, Stage2_discriminator=Stage2_discriminator,
-    embedding=embedding_model, Stage1_Dense_mu_sigma_model=Stage1_Dense_mu_sigma_model, Stage2_Dense_mu_sigma_model=Stage2_Dense_mu_sigma_model)
+    Generator=Generator, Discriminator=Discriminator,
+    embedding=embedding_model, Dense_mu_sigma_model=Dense_mu_sigma_model)
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=2)
     if ckpt_manager.latest_checkpoint and continue_train:
@@ -53,8 +51,7 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     gen_loss = tf.keras.metrics.Mean(name='gen_loss')
     disc_loss = tf.keras.metrics.Mean(name='disc_loss')
 
-    train = train_one_epoch(model=[Stage1_generator, Stage1_discriminator, Stage2_generator
-        , Stage2_discriminator, embedding_model, Stage1_Dense_mu_sigma_model, Stage2_Dense_mu_sigma_model],
+    train = train_one_epoch(model=[Generator, Discriminator, embedding_model, Dense_mu_sigma_model],
               optimizers=[Stage1_generator_optimizer, Stage1_discriminator_optimizer, Stage2_generator_optimizer, Stage2_discriminator_optimizer],
               train_dataset=train_dataset, metrics=[gen_loss, disc_loss], noise_dim=noise_dim, gp=20)
 
@@ -66,12 +63,10 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
         if (epoch + 1) % 5 == 0:
             ckpt_manager.save()
         try:
-            pic.save_created_pic([Stage1_generator, Stage2_generator, embedding_model, Stage1_Dense_mu_sigma_model, Stage2_Dense_mu_sigma_model],
+            pic.save_created_pic([Generator, Discriminator, embedding_model, Dense_mu_sigma_model],
                 8, noise_dim, epoch, mid_epoch, dataset.get_random_text, dataset.text_decoder)
         except:
             continue
-    pic.show_created_pic([Stage1_generator, Stage2_generator, embedding_model], 
-    8, noise_dim, dataset.get_random_text, dataset.text_decoder)
 
     # # fid score
     # gen = generator_model

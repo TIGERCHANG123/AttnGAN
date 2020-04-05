@@ -4,8 +4,7 @@ import tensorflow.keras.backend as K
 
 class train_one_epoch():
     def __init__(self, model, train_dataset, optimizers, metrics, noise_dim, gp):
-        self.Stage1_generator, self.Stage1_discriminator, self.Stage2_generator, self.Stage2_discriminator\
-            , self.embedding, self.Stage1_Dense_mu_sigma, self.Stage2_Dense_mu_sigma = model
+        self.Generator, self.Discriminator,  self.embedding, self.Dense_mu_sigma = model
         self.Stage1_generator_optimizer, self.Stage1_discriminator_optimizer, self.Stage2_generator_optimizer, self.Stage2_discriminator_optimizer = optimizers
 
         self.gen_loss, self.disc_loss = metrics
@@ -34,81 +33,52 @@ class train_one_epoch():
         loss = tf.reduce_mean(loss)
         return loss
 
-    def train_step(self, noise, images_1, images_2, text, text_generator, Stage1_training):
+    def train_step(self, noise, images_1, images_2, text, text_generator):
         with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, \
                 tf.GradientTape() as Stage2_gen_tape, tf.GradientTape() as Stage2_disc_tape:
-            embedding_code = self.embedding(text, training=Stage1_training)
-            mu_1, sigma_1 = self.Stage1_Dense_mu_sigma(embedding_code, training=Stage1_training)
-            Stage1_KL_loss = self.KL_loss(mu_1, sigma_1)
+            embedding_code = self.embedding(text)
+            mu_1, sigma_1 = self.Dense_mu_sigma(embedding_code)
+            KL_loss = self.KL_loss(mu_1, sigma_1)
             epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_1))
             stddev = tf.exp(sigma_1)
             text = mu_1 + stddev * epsilon
             # text = embedding_code
-            generated_images = self.Stage1_generator(text, noise, training=Stage1_training)
-            real_output = self.Stage1_discriminator(embedding_code, images_1, training=Stage1_training)
-            fake_output1 = self.Stage1_discriminator(embedding_code, generated_images, training=Stage1_training)
-            fake_text = text_generator(images_1.shape[0])
-            fake_text = self.embedding(fake_text, training=Stage1_training)
-            fake_output2 = self.Stage1_discriminator(fake_text, images_1, training=Stage1_training)
-            if Stage1_training:
-                Stage1_disc_loss, Stage1_real_loss, Stage1_fake_loss1, Stage1_fake_loss2 \
-                    = self.discriminator_loss(real_output, fake_output1, fake_output2)
-                Stage1_gen_loss = self.generator_loss(fake_output1)\
-                                  + Stage1_KL_loss
-            else:
-                mu_2, sigma_2 = self.Stage2_Dense_mu_sigma(embedding_code, training=not Stage1_training)
-                Stage2_KL_loss = self.KL_loss(mu_2, sigma_2)
-                epsilon = tf.compat.v1.random.truncated_normal(tf.shape(mu_2))
-                stddev = tf.exp(sigma_2)
-                text = mu_2 + stddev * epsilon
-                # text = embedding_code
-                generated_images = self.Stage2_generator(text, generated_images, training=not Stage1_training)
-                real_output = self.Stage2_discriminator(embedding_code, images_2, training=not Stage1_training)
-                fake_output1 = self.Stage2_discriminator(embedding_code, generated_images, training=not Stage1_training)
-                fake_text = text_generator(images_1.shape[0])
-                fake_text = self.embedding(fake_text)
-                fake_output2 = self.Stage2_discriminator(fake_text, images_2, training=not Stage1_training)
+            small_gen, large_gen = self.Generator(text, noise)
+            small_real, large_real = self.Discriminator(embedding_code, images_1, images_2)
+            small_fake1, large_fake1 = self.Discriminator(embedding_code, small_gen, large_gen)
 
-                Stage2_disc_loss, Stage2_real_loss, Stage2_fake_loss1, Stage2_fake_loss2 \
-                    = self.discriminator_loss(real_output, fake_output1, fake_output2)
-                Stage2_gen_loss = self.generator_loss(fake_output1) \
-                                  + Stage2_KL_loss
-        if Stage1_training:
-            gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss,
-                                                              self.Stage1_generator.trainable_variables+
-                                                              self.embedding.trainable_variables
-                                                              +self.Stage1_Dense_mu_sigma.trainable_variables
-                                                              )
-            self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator,
-                                                                self.Stage1_generator.trainable_variables+
-                                                                self.embedding.trainable_variables
-                                                                + self.Stage1_Dense_mu_sigma.trainable_variables
-                                                                ))
-            gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,
-                                                                   self.Stage1_discriminator.trainable_variables +
-                                                                   self.embedding.trainable_variables)
-            self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                                    self.Stage1_discriminator.trainable_variables+
-                                                                    self.embedding.trainable_variables))
-            self.gen_loss(Stage1_gen_loss)
-            self.disc_loss(Stage1_disc_loss)
-        else:
-            gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss,
-                                                              self.Stage2_generator.trainable_variables
-                                                              +self.embedding.trainable_variables
-                                                              +self.Stage2_Dense_mu_sigma.trainable_variables
-                                                              )
-            self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator,
-                                                                self.Stage2_generator.trainable_variables
-                                                                +self.embedding.trainable_variables
-                                                                +self.Stage2_Dense_mu_sigma.trainable_variables
-                                                                ))
-            gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss,
-                                                                   self.embedding.trainable_variables +
-                                                                   self.Stage2_discriminator.trainable_variables)
-            self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,
-                                                                    self.embedding.trainable_variables+
-                                                                    self.Stage2_discriminator.trainable_variables))
+            fake_text = text_generator(images_1.shape[0])
+            fake_text = self.embedding(fake_text)
+            small_fake2, large_fake2 = self.Discriminator(fake_text, small_gen, large_gen)
+            # loss calculation
+            Stage1_disc_loss, Stage1_real_loss, Stage1_fake_loss1, Stage1_fake_loss2 \
+                = self.discriminator_loss(small_real, small_fake1, small_fake2)
+            Stage1_gen_loss = self.generator_loss(small_fake1)\
+                              + KL_loss
+            Stage2_disc_loss, Stage2_real_loss, Stage2_fake_loss1, Stage2_fake_loss2 \
+                = self.discriminator_loss(large_real, large_fake1, large_fake2)
+            Stage2_gen_loss = self.generator_loss(large_fake1)\
+                              + KL_loss
+            # gradient apply
+            Stage1_gen_variables = [v for v in self.Generator.trainable_variables if 'h0' in v.name] \
+                                + self.Dense_mu_sigma.trainable_variables\
+                                + self.embedding.trainable_variables
+            Stage1_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h0' in v.name] \
+                                + self.embedding.trainable_variables
+            gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss,Stage1_gen_variables)
+            self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
+            gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,Stage1_dist_variables)
+            self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,Stage1_dist_variables))
+
+            Stage2_gen_variables = [v for v in self.Generator.trainable_variables if 'h1' in v.name] \
+                                   + self.Dense_mu_sigma.trainable_variables \
+                                   + self.embedding.trainable_variables
+            Stage2_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h1' in v.name] \
+                                    + self.embedding.trainable_variables
+            gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss, Stage2_gen_variables)
+            self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage2_gen_variables))
+            gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, Stage2_dist_variables)
+            self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, Stage2_dist_variables))
 
             self.gen_loss(Stage2_gen_loss)
             self.disc_loss(Stage2_disc_loss)
@@ -118,7 +88,7 @@ class train_one_epoch():
 
         for (batch, (image_1, image_2, text)) in enumerate(self.train_dataset):
             noise = tf.random.normal([image_1.shape[0], self.noise_dim], dtype=tf.float32)
-            self.train_step(noise, image_1, image_2, text, text_generator, epoch < mid_epoch)
+            self.train_step(noise, image_1, image_2, text, text_generator)
             pic.add([self.gen_loss.result().numpy(), self.disc_loss.result().numpy()])
             pic.save()
             if batch % 100 == 0:
