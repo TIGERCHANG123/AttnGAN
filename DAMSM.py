@@ -25,7 +25,7 @@ class attention(tf.keras.Model):
     # print('e shape', e.shape)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
     print('f shape', f.shape)
-    v = self.dense(tf.transpose(f, [0, 2, 1]))
+    v = self.dense(f)
     print('v1 shape', v.shape)
     v = tf.transpose(v, [0, 2, 1])
     print('v shape', v.shape)
