@@ -56,9 +56,9 @@ class attention_(tf.keras.Model):
         print('cosine similarity_ shape', cosine_similarity.shape)
         return cosine_similarity
 
-def damsm_model(num_tokens):
-  Attention1 = attention(num_tokens, 'attention')
-  Attention2 = attention_(num_tokens, 'attention_')
+def damsm_model(num_tokens, seq_length):
+  Attention1 = attention(seq_length, 'attention')
+  Attention2 = attention_(seq_length, 'attention_')
   embedding_model = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   gen_name = 'damsm'
   return Attention1, Attention2, embedding_model, gen_name
@@ -134,7 +134,7 @@ def main(continue_train, train_time, train_epoch):
     batch_size = 50
 
     dataset = CUB_dataset(dataset_root,batch_size = batch_size)
-    Attention1, Attention2, embedding_model, model_name = damsm_model(dataset.num_tokens)
+    Attention1, Attention2, embedding_model, model_name = damsm_model(dataset.num_tokens, dataset.max_seq_length)
 
     model_dataset = model_name + '-' + dataset.name
     train_dataset = dataset.get_train_dataset()
