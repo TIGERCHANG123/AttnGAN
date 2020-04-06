@@ -71,7 +71,7 @@ class train_one_epoch():
         new_input = image_model.input
 
         for layers in image_model.layers:
-            if 'mix' in layers.name:
+            if 'mix' in layers.name or 'average' in layers.name:
                 print(layers.name)
         average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
