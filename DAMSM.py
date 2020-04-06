@@ -24,19 +24,17 @@ class attention(tf.keras.Model):
   def call(self, e, f, gamma):
     # print('e shape', e.shape)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
-    print('f shape', f.shape)
     v = self.dense(f)
-    print('v1 shape', v.shape)
     v = tf.transpose(v, [0, 2, 1])
-    print('v shape', v.shape)
     s = tf.matmul(tf.transpose(e, [0, 2, 1]), v)
-    print('s shape', s.shape)
     alpha = tf.nn.softmax(gamma*s, axis=2)
     c = tf.matmul(v, tf.transpose(alpha, [0, 2, 1]))
-    print('c shape', c.shape)
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
-    cosine_similarity = tf.matmul(c, tf.transpose(e, [0, 2, 1]))/(lc*le)
+    print('lc shape', lc.shape)
+    ce = tf.matmul(c, tf.transpose(e, [0, 2, 1]))
+    print('c * e shape', ce.shape)
+    cosine_similarity = ce/(lc*le)
     print('cosine similarity shape', cosine_similarity.shape)
     return cosine_similarity
 
@@ -71,9 +69,6 @@ class train_one_epoch():
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
 
-        for layer in image_model.layers:
-            if 'average' in layer.name:
-                print(layer.name)
         average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
 
