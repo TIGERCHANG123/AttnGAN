@@ -85,10 +85,18 @@ class train_one_epoch():
         self.gamma2 = 5
         self.gamma3 = 10
 
-    def L_loss(self, cosine_similarity):
+    def Lw_loss(self, cosine_similarity):
         print('cosine shape', cosine_similarity.shape)
         R = tf.math.log(tf.math.pow(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2), 1 / self.gamma2))
         print('RQD shape', R.shape)
+        PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
+        PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
+        L1 = -tf.reduce_sum(tf.math.log(PQD))
+        L2 = -tf.reduce_sum(tf.math.log(PDQ))
+        return L1, L2
+    def Ls_loss(self, cosine_similarity):
+        R = cosine_similarity
+        print('R shape', R.shape)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
         L1 = -tf.reduce_sum(tf.math.log(PQD))
