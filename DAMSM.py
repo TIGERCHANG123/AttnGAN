@@ -22,9 +22,11 @@ class attention(tf.keras.Model):
     super(attention, self).__init__()
     self.dense = layers.Dense(units=num_tokens, name=name+'_dense')
   def call(self, e, f, gamma):
-    print('e shape', e.shape)
+    # print('e shape', e.shape)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
+    print('f shape', f.shape)
     v = self.dense(tf.transpose(f, [0, 2, 1]))
+    print('v1 shape', v.shape)
     v = tf.transpose(v, [0, 2, 1])
     print('v shape', v.shape)
     s = tf.matmul(tf.transpose(e, [0, 2, 1]), v)
@@ -86,7 +88,6 @@ class train_one_epoch():
         with tf.GradientTape() as tape:
             img=[]
             for i in range(images_2.shape[0]):
-                # print(type(np.asarray(images_2[i].numpy())))
                 img.append(cv2.resize(images_2[i].numpy(),  (299, 299)))
             img = np.asarray(img)
             img = tf.convert_to_tensor(img)
