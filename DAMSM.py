@@ -6,6 +6,8 @@ from show_pic import draw
 from datasets.CUB import CUB_dataset
 from AttnGAN import *
 import cv2
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
 
 root = '/content/drive/My Drive'
 dataset_root = '/content'
@@ -162,5 +164,9 @@ if __name__ == '__main__':
                 epoch = int(value)
     except:
         print('wrong input!')
+
+    config = ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = InteractiveSession(config=config)
 
     main(continue_train=continue_train, train_time=train_time, train_epoch=epoch)
