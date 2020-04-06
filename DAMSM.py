@@ -70,8 +70,12 @@ class train_one_epoch():
         new_input = image_model.input
 
         for layer in image_model.layers:
-            print(layer.name)
-        print('find layer', [layers for layers in image_model.layers if layers.name=='mixed 6e'])
+            if 'average' in layer.name:
+                print(layer.name)
+        for layer in image_model.layers:
+            if 'mixed' in layer.name:
+                print(layer.name)
+        print('find layer', [layers for layers in image_model.layers if layers.name=='mixed6'][0].name)
         hidden_layer1 = image_model.layers[-1].output
         hidden_layer2 = image_model.layers[-1].output
         self.InceptionV3 = tf.keras.Model(new_input, [hidden_layer1, hidden_layer2])
