@@ -20,7 +20,7 @@ class CUB_dataset():
         lines=[]
         for file_path in self.path_list:
             file_path = self.attribute_path + '/' + file_path + '.txt'
-            print(file_pathK)
+            print(file_path)
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     temp_lines = f.read().split('\n')
