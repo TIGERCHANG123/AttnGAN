@@ -69,8 +69,8 @@ class train_one_epoch():
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
 
-        print(image_model.layers)
-        print('layer name', image_model.layers[-1].name)
+        for layer in image_model.layers:
+            print(layer.name)
         print('find layer', [layers for layers in image_model.layers if layers.name=='mixed 6e'])
         hidden_layer1 = image_model.layers[-1].output
         hidden_layer2 = image_model.layers[-1].output
