@@ -69,10 +69,13 @@ class train_one_epoch():
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
 
+        for layer in image_model.layers:
+            if 'average' in layer.name:
+                print(layer.name)
         average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
 
-        self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[average_pooling2d_8.output, mixed6.output])
+        self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[mixed6.output, average_pooling2d_8.output])
         self.loss = metrics
         self.train_dataset = train_dataset
         self.gamma1 = 5
