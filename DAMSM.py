@@ -68,9 +68,10 @@ class train_one_epoch():
 
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
+
         print(image_model.layers)
-        print(image_model.layers[-1].name)
-        print([layers for layers in image_model.layers if layers.name=='0b_1x7'])
+        print('layer name', image_model.layers[-1].name)
+        print('find layer', [layers for layers in image_model.layers if layers.name=='0b_1x7'])
         hidden_layer1 = image_model.layers[-1].output
         hidden_layer2 = image_model.layers[-1].output
         self.InceptionV3 = tf.keras.Model(new_input, [hidden_layer1, hidden_layer2])
