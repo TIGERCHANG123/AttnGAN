@@ -32,6 +32,7 @@ class attention(tf.keras.Model):
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
     ce = tf.matmul(tf.transpose(e, [0, 2, 1]), c)
+    print('ce shape', ce.shape)
     lc = lc * tf.ones_like(ce)
     le = le * tf.ones_like(ce)
     print('lc shape', lc.shape)
