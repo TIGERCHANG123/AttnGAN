@@ -70,6 +70,8 @@ class train_one_epoch():
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
 
+        for layers in image_model.layers:
+            print(layers.name)
         average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
 
@@ -96,10 +98,7 @@ class train_one_epoch():
         return L1, L2
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
-            img=[]
-            for i in range(images_2.shape[0]):
-                img.append(cv2.resize(images_2[i].numpy(),  (299, 299)))
-            img = np.asarray(img)
+            img = tf.image.resize(images_2, [299, 299], 'bilinear')
             img = tf.convert_to_tensor(img)
             f, f_ = self.InceptionV3(img)
             f_ = tf.reduce_mean(f_, axis=[1, 2])
