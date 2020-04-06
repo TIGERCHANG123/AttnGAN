@@ -36,7 +36,7 @@ class attention(tf.keras.Model):
     le = tf.expand_dims(le, axis=2)
     lc = tf.expand_dims(lc, axis=1)
     lce = tf.matmul(le, lc)
-    print('lce shape', lc.shape)
+    print('lce shape', lce.shape)
     cosine_similarity = ce/lce
     print('cosine similarity shape', cosine_similarity.shape)
     return cosine_similarity
