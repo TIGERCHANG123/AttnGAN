@@ -71,10 +71,8 @@ class train_one_epoch():
 
         average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
-        print('average pool type: ', type(average_pooling2d_8))
-        print('last layer type: ', type(image_model.layers[-1]))
 
-        self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[mixed6, image_model.layers[-1]])
+        self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[average_pooling2d_8.output, mixed6.output])
         self.loss = metrics
         self.train_dataset = train_dataset
         self.gamma1 = 5
