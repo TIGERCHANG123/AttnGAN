@@ -69,16 +69,11 @@ class train_one_epoch():
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
 
-        for layer in image_model.layers:
-            if 'average' in layer.name:
-                print(layer.name)
-        for layer in image_model.layers:
-            if 'mixed' in layer.name:
-                print(layer.name)
-        print('find layer', [layers for layers in image_model.layers if layers.name=='mixed6'][0].name)
-        hidden_layer1 = image_model.layers[-1].output
-        hidden_layer2 = image_model.layers[-1].output
-        self.InceptionV3 = tf.keras.Model(new_input, [hidden_layer1, hidden_layer2])
+        average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
+        mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
+        print('find layer',average_pooling2d_8.name)
+        print('find layer',mixed6.name)
+        self.InceptionV3 = tf.keras.Model(new_input, [average_pooling2d_8, mixed6])
         self.loss = metrics
         self.train_dataset = train_dataset
         self.gamma1 = 5
@@ -96,6 +91,10 @@ class train_one_epoch():
             print('img shape', img.shape)
             f, f_ = self.InceptionV3(img)
             e, e_ = self.embedding_model(text)
+            print('f shape', f.shape)
+            print('f_ shape', f_.shape)
+            print('e shape', e.shape)
+            print('e_ shape', e_.shape)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
             cosine_similarity_ = self.Attention2(e_, f_)
             RQD = tf.math.pow(tf.math.log(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2)), 1 / self.gamma2)
