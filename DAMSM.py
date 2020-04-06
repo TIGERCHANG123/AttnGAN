@@ -22,7 +22,6 @@ class attention(tf.keras.Model):
     super(attention, self).__init__()
     self.dense = layers.Dense(units=num_tokens, name=name+'_dense')
   def call(self, e, f, gamma):
-    # print('e shape', e.shape)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
     v = self.dense(f)
     v = tf.transpose(v, [0, 2, 1])
@@ -42,7 +41,6 @@ class attention(tf.keras.Model):
     e = tf.transpose(e, [2, 1, 0])
     cosine_similarity = tf.matmul(c, e)
     cosine_similarity = tf.transpose(cosine_similarity, [1, 2, 0])
-    print('cos shape', cosine_similarity.shape)
     return cosine_similarity
 
 class attention_(tf.keras.Model):
@@ -50,14 +48,11 @@ class attention_(tf.keras.Model):
         super(attention_, self).__init__()
         self.dense = layers.Dense(units=num_tokens, name=name + '_dense')
     def call(self, e_, f_):
-        # print('e_ shape', e_.shape)
         v_ = self.dense(f_)
-        # print('v_ shape', v_.shape)
         v_ = v_ / tf.abs(v_)
         e_ = e_ / tf.abs(e_)
         v_ = tf.transpose(v_, [1, 0])
         cosine_similarity = tf.matmul(e_, v_)
-        # print('cosine similarity_ shape', cosine_similarity.shape)
         return cosine_similarity
 
 def damsm_model(num_tokens, seq_length):
