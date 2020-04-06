@@ -118,9 +118,9 @@ class train_one_epoch():
             print('e shape', e.shape)
             print('e_ shape', e_.shape)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
-            L1w , L2w = self.L_loss(cosine_similarity)
+            L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
-            L1s, L2s = self.L_loss(cosine_similarity_)
+            L1s, L2s = self.Ls_loss(cosine_similarity_)
 
             loss = L1w + L2w + L1s + L2s
         self.loss(loss)
