@@ -86,9 +86,7 @@ class train_one_epoch():
         self.gamma3 = 10
 
     def Lw_loss(self, cosine_similarity):
-        print('cosine shape', cosine_similarity.shape)
         R = tf.math.log(tf.math.pow(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2), 1 / self.gamma2))
-        print('RQD shape', R.shape)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
         L1 = -tf.reduce_sum(tf.math.log(PQD))
@@ -96,7 +94,6 @@ class train_one_epoch():
         return L1, L2
     def Ls_loss(self, cosine_similarity):
         R = cosine_similarity
-        print('R shape', R.shape)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
         L1 = -tf.reduce_sum(tf.math.log(PQD))
@@ -109,19 +106,13 @@ class train_one_epoch():
                 img.append(cv2.resize(images_2[i].numpy(),  (299, 299)))
             img = np.asarray(img)
             img = tf.convert_to_tensor(img)
-            print('img shape', img.shape)
             f, f_ = self.InceptionV3(img)
             f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
-            print('f shape', f.shape)
-            print('f_ shape', f_.shape)
-            print('e shape', e.shape)
-            print('e_ shape', e_.shape)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
             L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
-
             loss = L1w + L2w + L1s + L2s
         self.loss(loss)
         variables = self.Attention1.variables + self.Attention2.variables + self.embedding_model.variables
