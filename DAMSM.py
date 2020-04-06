@@ -55,8 +55,9 @@ class attention_(tf.keras.Model):
 def damsm_model(num_tokens):
   Attention1 = attention(num_tokens, 'attention')
   Attention2 = attention_(num_tokens, 'attention_')
+  embedding_model = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   gen_name = 'damsm'
-  return Attention1, Attention2, embedding, gen_name
+  return Attention1, Attention2, embedding_model, gen_name
 
 class train_one_epoch():
     def __init__(self, model, train_dataset, optimizers, metrics):
