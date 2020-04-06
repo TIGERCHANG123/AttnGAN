@@ -119,7 +119,7 @@ def get_gan(num_tokens):
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   Generator = Attn_generator()
   Discriminator = Attn_discriminator()
-  gen_name = 'AttnGAN'
+  gen_name = 'AttnGAN_2'
   return Dense_mu_sigma, Embedding, Generator, Discriminator, gen_name
 
 

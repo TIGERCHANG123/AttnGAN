@@ -115,7 +115,7 @@ def main(continue_train, train_time, train_epoch):
     batch_size = 50
 
     dataset = CUB_dataset(dataset_root,batch_size = batch_size)
-    Attention1, Attention2, embedding_model, model_name = get_gan(dataset.num_tokens)
+    Attention1, Attention2, embedding_model, model_name = damsm_model(dataset.num_tokens)
 
     model_dataset = model_name + '-' + dataset.name
     train_dataset = dataset.get_train_dataset()
