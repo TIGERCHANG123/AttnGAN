@@ -8,6 +8,7 @@ from AttnGAN import *
 import cv2
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
+import numpy as np
 
 root = '/content/drive/My Drive'
 dataset_root = '/content'
@@ -77,7 +78,11 @@ class train_one_epoch():
 
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
-            img = tf.convert_to_tensor(cv2.resize(images_2.numpy(), [299, 299, 3]))
+            img=[]
+            for i in range(images_2.shape[0]):
+                img.append(cv2.resize(images_2.numpy(), [299, 299, 3]))
+            img = np.asarray(img)
+            img = tf.convert_to_tensor(img)
             print('img shape', img.shape)
             f, f_ = self.InceptionV3(img)
             e, e_ = self.embedding_model(text)
