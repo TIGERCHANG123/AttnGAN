@@ -41,6 +41,7 @@ class attention(tf.keras.Model):
     c = tf.transpose(c, [2, 0, 1])
     e = tf.transpose(e, [2, 1, 0])
     cosine_similarity = tf.matmul(c, e)
+    cosine_similarity = tf.transpose(cosine_similarity, [1, 2, 0])
     print('cos shape', cosine_similarity.shape)
     return cosine_similarity
 
@@ -52,11 +53,10 @@ class attention_(tf.keras.Model):
         print('e_ shape', e_.shape)
         v_ = self.dense(f_)
         print('v_ shape', v_.shape)
-        s_ = tf.matmul(e_, v_)
-        print('s_ shape', s_.shape)
-        lc_ = tf.math.sqrt(v_ * v_, axis=1)
-        le_ = tf.math.sqrt(e_ * e_, axis=1)
-        cosine_similarity = (v_ * e_) / (lc_ * le_)
+        v_ = v_ / tf.abs(v_)
+        e_ = e_ / tf.abs(e_)
+        v_ = tf.transpose(v_, [1, 0])
+        cosine_similarity = tf.matmul(e_, v_)
         print('cosine similarity_ shape', cosine_similarity.shape)
         return cosine_similarity
 
@@ -85,6 +85,18 @@ class train_one_epoch():
         self.gamma2 = 5
         self.gamma3 = 10
 
+    def L_loss(self, cosine_similarity):
+        RQD = tf.math.log(tf.math.pow(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2)),
+                          1 / self.gamma2)
+        RDQ = tf.math.log(tf.math.pow(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=1)),
+                          1 / self.gamma2)
+        print('RQD shape', RQD.shape)
+        PQD = tf.nn.softmax(self.gamma3 * RQD, axis=1) * tf.eye(RQD.shape[0])
+        PDQ = tf.nn.softmax(self.gamma3 * RDQ, axis=1) * tf.eye(RDQ.shape[0])
+        L1 = -tf.reduce_sum(tf.math.log(PQD))
+        L2 = -tf.reduce_sum(tf.math.log(PDQ))
+
+        return L1, L2
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
             img=[]
@@ -101,21 +113,11 @@ class train_one_epoch():
             print('e shape', e.shape)
             print('e_ shape', e_.shape)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
+            L1w , L2w = self.L_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
-            RQD = tf.math.pow(tf.math.log(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2)), 1 / self.gamma2)
-            RDQ = tf.math.pow(tf.math.log(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=1)), 1 / self.gamma2)
-            print('RQD shape', RQD.shape)
-            PQD = tf.nn.softmax(self.gamma3*RQD, axis=1)
-            PDQ = tf.nn.softmax(self.gamma3*RDQ, axis=1)
-            L_1w = -tf.reduce_sum(tf.math.log(PQD))
-            L_2w = -tf.reduce_sum(tf.math.log(PDQ))
+            L1s, L2s = self.L_loss(cosine_similarity_)
 
-            PQD_ = tf.nn.softmax(self.gamma3*cosine_similarity_, axis=1)
-            PDQ_ = tf.nn.softmax(self.gamma3*cosine_similarity_, axis=1)
-            L_1s = -tf.reduce_sum(tf.math.log(PQD_))
-            L_2s = -tf.reduce_sum(tf.math.log(PDQ_))
-
-            loss = L_1w + L_2w + L_1s + L_2s
+            loss = L1w + L2w + L1s + L2s
         self.loss(loss)
         variables = self.Attention1.variables + self.Attention2.variables + self.embedding_model.variables
         gradients_of_generator = tape.gradient(loss, variables)
