@@ -92,6 +92,7 @@ class train_one_epoch():
             img = tf.convert_to_tensor(img)
             print('img shape', img.shape)
             f, f_ = self.InceptionV3(img)
+            f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
             print('f shape', f.shape)
             print('f_ shape', f_.shape)
