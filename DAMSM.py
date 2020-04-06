@@ -23,6 +23,7 @@ class attention(tf.keras.Model):
     self.dense = layers.Dense(units=num_tokens, name=name+'_dense')
   def call(self, e, f, gamma):
     print('e shape', e.shape)
+    f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
     v = self.dense(tf.transpose(f, [0, 2, 1]))
     v = tf.transpose(v, [0, 2, 1])
     print('v shape', v.shape)
@@ -42,15 +43,15 @@ class attention_(tf.keras.Model):
         super(attention_, self).__init__()
         self.dense = layers.Dense(units=num_tokens, name=name + '_dense')
     def call(self, e_, f_):
-        print('e shape', e_.shape)
+        print('e_ shape', e_.shape)
         v_ = self.dense(f_)
-        print('v shape', v_.shape)
+        print('v_ shape', v_.shape)
         s_ = tf.matmul(e_, v_)
-        print('s shape', s_.shape)
+        print('s_ shape', s_.shape)
         lc_ = tf.math.sqrt(v_ * v_, axis=1)
         le_ = tf.math.sqrt(e_ * e_, axis=1)
         cosine_similarity = (v_ * e_) / (lc_ * le_)
-        print('cosine similarity shape', cosine_similarity.shape)
+        print('cosine similarity_ shape', cosine_similarity.shape)
         return cosine_similarity
 
 def damsm_model(num_tokens):
@@ -67,6 +68,9 @@ class train_one_epoch():
 
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
+        print(image_model.layers)
+        print(image_model.layers[-1].name)
+        print([layers for layers in image_model.layers if layers.name=='0b_1x7'])
         hidden_layer1 = image_model.layers[-1].output
         hidden_layer2 = image_model.layers[-1].output
         self.InceptionV3 = tf.keras.Model(new_input, [hidden_layer1, hidden_layer2])
