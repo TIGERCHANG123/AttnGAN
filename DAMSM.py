@@ -58,8 +58,8 @@ class attention_(tf.keras.Model):
         return cosine_similarity
 
 def damsm_model(num_tokens, seq_length):
-  Attention1 = attention(seq_length, 'attention')
-  Attention2 = attention_(seq_length, 'attention_')
+  Attention1 = attention(num_tokens, 'attention')
+  Attention2 = attention_(num_tokens, 'attention_')
   embedding_model = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   gen_name = 'damsm'
   return Attention1, Attention2, embedding_model, gen_name
