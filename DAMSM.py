@@ -26,23 +26,22 @@ class attention(tf.keras.Model):
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
     v = self.dense(f)
     v = tf.transpose(v, [0, 2, 1])
-    print('v shape', v.shape)
     s = tf.matmul(tf.transpose(e, [0, 2, 1]), v)
-    print('s shape', s.shape)
-    alpha = tf.nn.softmax(gamma*s, axis=2)
+    s_ = tf.nn.softmax(s, axis=1)
+    alpha = tf.nn.softmax(gamma*s_, axis=2)
     c = tf.matmul(v, tf.transpose(alpha, [0, 2, 1]))
-    print('c shape', c.shape)
+
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
-    print('lc shape', lc.shape)
-    ce = tf.matmul(tf.transpose(e, [0, 2, 1]), c)
-    print('ce shape', ce.shape)
-    le = tf.expand_dims(le, axis=2)
-    lc = tf.expand_dims(lc, axis=1)
-    lce = tf.matmul(le, lc)
-    print('lce shape', lce.shape)
-    cosine_similarity = ce/lce
-    print('cosine similarity shape', cosine_similarity.shape)
+    lc = tf.expand_dims(lc, axis=1) * tf.ones_like(c)
+    le = tf.expand_dims(le, axis=1) * tf.ones_like(e)
+
+    c = c / lc
+    e = e / le
+    c = tf.transpose(c, [2, 0, 1])
+    e = tf.transpose(e, [2, 1, 0])
+    cosine_similarity = tf.matmul(c, e)
+    print('cos shape', cosine_similarity.shape)
     return cosine_similarity
 
 class attention_(tf.keras.Model):
