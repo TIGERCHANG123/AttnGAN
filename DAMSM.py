@@ -7,8 +7,11 @@ from datasets.CUB import CUB_dataset
 from AttnGAN import *
 import cv2
 
-root = '/home/tigerc'
-dataset_root = '/home/tigerc'
+root = '/content/drive/My Drive'
+dataset_root = '/content'
+
+# root = '/home/tigerc'
+# dataset_root = '/home/tigerc'
 temp_root = root+'/temp'
 
 class attention(tf.keras.Model):
