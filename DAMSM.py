@@ -80,8 +80,8 @@ class train_one_epoch():
         with tf.GradientTape() as tape:
             img=[]
             for i in range(images_2.shape[0]):
-                print(type(np.asarray(images_2[i].numpy())))
-                img.append(cv2.resize(np.asarray(images_2[i].numpy()), [299, 299, 3]))
+                # print(type(np.asarray(images_2[i].numpy())))
+                img.append(cv2.resize(images_2[i].numpy(),  (299, 299, 3)))
             img = np.asarray(img)
             img = tf.convert_to_tensor(img)
             print('img shape', img.shape)
