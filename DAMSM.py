@@ -32,8 +32,9 @@ class attention(tf.keras.Model):
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
     print('lc shape', lc.shape)
-    ce = tf.matmul(c, tf.transpose(e, [0, 2, 1]))
-    print('c * e shape', ce.shape)
+    ce = tf.matmul(tf.transpose(e, [0, 2, 1]), c)
+    lc = lc * tf.ones_like(ce)
+    le = le * tf.ones_like(ce)
     cosine_similarity = ce/(lc*le)
     print('cosine similarity shape', cosine_similarity.shape)
     return cosine_similarity
