@@ -68,7 +68,7 @@ class train_one_epoch():
         self.optimizer = optimizers
 
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
-        new_input = image_model.input
+        new_input = image_model.input(shape=[299, 299, 3])
 
         for layers in image_model.layers:
             if 'mix' in layers.name or 'average' in layers.name:
