@@ -56,7 +56,7 @@ def damsm_model(num_tokens, seq_length):
   Attention1 = attention(256, 'attention')
   Attention2 = attention_(256, 'attention_')
   embedding_model = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
-  gen_name = 'damsm_rmsProp'
+  gen_name = 'damsm'
   return Attention1, Attention2, embedding_model, gen_name
 
 class train_one_epoch():
