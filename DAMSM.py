@@ -56,7 +56,7 @@ def damsm_model(num_tokens, seq_length):
   Attention1 = attention(256, 'attention')
   Attention2 = attention_(256, 'attention_')
   embedding_model = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
-  gen_name = 'damsm'
+  gen_name = 'damsm_rmsProp'
   return Attention1, Attention2, embedding_model, gen_name
 
 class train_one_epoch():
@@ -85,15 +85,10 @@ class train_one_epoch():
         return L1, L2
     def Ls_loss(self, cosine_similarity):
         R = cosine_similarity
-        # print('R', tf.reduce_max(R))
         PQD = tf.nn.softmax(R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(R, axis=1) * tf.eye(R.shape[0])
-        # print('PQD', tf.reduce_sum(PQD, axis=0))
-        # print('PDQ', tf.reduce_sum(PDQ, axis=0))
         L1 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PQD, axis=0)))
         L2 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PDQ, axis=0)))
-        # print('L1', L1)
-        # print('L2', L2)
         return L1, L2
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
@@ -134,7 +129,8 @@ def main(continue_train, train_time, train_epoch):
     model_dataset = model_name + '-' + dataset.name
     train_dataset = dataset.get_train_dataset()
     pic = draw(10, temp_root, model_dataset, train_time=train_time)
-    damsm_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+    # damsm_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+    damsm_optimizer = tf.keras.optimizers.RMSprop(1e-4, momentum=0.1)
 
     attn_path = temp_root + '/temp_model_save/attn/' + model_dataset
     embedding_path = temp_root + '/temp_model_save/embedding/' + model_dataset
