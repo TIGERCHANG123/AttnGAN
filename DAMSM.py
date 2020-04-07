@@ -23,11 +23,12 @@ class attention(tf.keras.Model):
     self.dense = layers.Dense(units=T, name=name+'_dense')
   def call(self, e, f, gamma):
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
-    print('f', f)
     v = self.dense(f)
     v = tf.transpose(v, [0, 2, 1])
+    print('v', v)
     s = tf.matmul(tf.transpose(e, [0, 2, 1]), v)
     s_ = tf.nn.softmax(s, axis=1)
+    print('s_', s_)
     alpha = tf.nn.softmax(gamma*s_, axis=2)
     c = tf.matmul(v, tf.transpose(alpha, [0, 2, 1]))
     print('c', c)
