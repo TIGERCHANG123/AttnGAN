@@ -85,15 +85,15 @@ class train_one_epoch():
         return L1, L2
     def Ls_loss(self, cosine_similarity):
         R = cosine_similarity
-        print('R', tf.reduce_max(R))
+        # print('R', tf.reduce_max(R))
         PQD = tf.nn.softmax(R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(R, axis=1) * tf.eye(R.shape[0])
-        print('PQD', tf.reduce_sum(PQD, axis=0))
-        print('PDQ', tf.reduce_sum(PDQ, axis=0))
+        # print('PQD', tf.reduce_sum(PQD, axis=0))
+        # print('PDQ', tf.reduce_sum(PDQ, axis=0))
         L1 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PQD, axis=0)))
         L2 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PDQ, axis=0)))
-        print('L1', L1)
-        print('L2', L2)
+        # print('L1', L1)
+        # print('L2', L2)
         return L1, L2
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
