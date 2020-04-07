@@ -105,7 +105,7 @@ class train_one_epoch():
             img = tf.image.resize(images_2, [299, 299], 'bilinear')
             img = tf.convert_to_tensor(img)
             f, f_ = self.InceptionV3(img)
-            print('f shape: {}, f_ shape: {}'.format(f.shape, f_.shape))
+            # print('f shape: {}, f_ shape: {}'.format(f.shape, f_.shape))
             f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
