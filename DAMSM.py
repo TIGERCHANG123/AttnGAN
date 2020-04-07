@@ -114,7 +114,10 @@ class train_one_epoch():
             L1s, L2s = self.Ls_loss(cosine_similarity_)
             loss = L1w + L2w
         self.loss(loss)
-        variables = self.Attention1.variables + self.Attention2.variables + self.embedding_model.variables
+        variables = self.Attention1.variables \
+                    + self.embedding_model.variables
+                    # + self.Attention2.variables \
+
         gradients_of_generator = tape.gradient(loss, variables)
         self.optimizer.apply_gradients(zip(gradients_of_generator, variables))
     def train(self, epoch, pic):
