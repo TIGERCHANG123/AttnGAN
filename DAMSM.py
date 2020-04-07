@@ -69,7 +69,7 @@ class train_one_epoch():
 
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         # new_input = tf.reshape(image_model.input, [299, 299, 3])
-        new_intput = tf.keras.layers.Input(shape=[299, 299, 3])
+        new_input = tf.keras.layers.Input(shape=[299, 299, 3])
         # print('shape', image_model.input.shape)
         for layers in image_model.layers:
             if 'mix' in layers.name or 'average' in layers.name:
