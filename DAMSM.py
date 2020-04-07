@@ -74,10 +74,11 @@ class train_one_epoch():
         for layers in image_model.layers:
             if 'mix' in layers.name or 'average' in layers.name:
                 print(layers.name)
-        average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
+        # average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
+        average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'mixed9_1'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
 
-        self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[mixed6.output, average_pooling2d_8.output, image_model.layers[-1].output])
+        self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[mixed6.output, average_pooling2d_8.output])
         self.InceptionV3.summary()
         self.loss = metrics
         self.train_dataset = train_dataset
@@ -104,6 +105,7 @@ class train_one_epoch():
             img = tf.image.resize(images_2, [299, 299], 'bilinear')
             img = tf.convert_to_tensor(img)
             f, f_ = self.InceptionV3(img)
+            print('f shape: {}, f_ shape: {}'.format(f.shape, f_.shape))
             f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
