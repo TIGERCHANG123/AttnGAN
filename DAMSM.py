@@ -95,6 +95,8 @@ class train_one_epoch():
         print('R', R)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
+        print('PQD', PQD)
+        print('PDQ', PDQ)
         L1 = -tf.reduce_sum(tf.math.log(PQD))
         L2 = -tf.reduce_sum(tf.math.log(PDQ))
         print('L1', L1)
