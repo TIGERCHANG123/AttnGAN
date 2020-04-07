@@ -22,6 +22,7 @@ class attention(tf.keras.Model):
     super(attention, self).__init__()
     self.dense = layers.Dense(units=T, name=name+'_dense')
   def call(self, e, f, gamma):
+    print('e', e)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
     print('f', f)
     v = self.dense(f)
