@@ -68,7 +68,7 @@ class train_one_epoch():
         self.optimizer = optimizers
 
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
-        new_input = image_model.input
+        new_input = tf.reshape(image_model.input, [299, 299, 3])
 
         print('shape', image_model.input.shape)
         for layers in image_model.layers:
