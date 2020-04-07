@@ -22,18 +22,18 @@ class attention(tf.keras.Model):
     super(attention, self).__init__()
     self.dense = layers.Dense(units=T, name=name+'_dense')
   def call(self, e, f, gamma):
-    print('e', e)
+    # print('e', e)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
-    print('f', f)
+    # print('f', f)
     v = self.dense(f)
     v = tf.transpose(v, [0, 2, 1])
-    print('v', v)
+    # print('v', v)
     s = tf.matmul(tf.transpose(e, [0, 2, 1]), v)
     s_ = tf.nn.softmax(s, axis=1)
-    print('s_', s_)
+    # print('s_', s_)
     alpha = tf.nn.softmax(gamma*s_, axis=2)
     c = tf.matmul(v, tf.transpose(alpha, [0, 2, 1]))
-    print('c', c)
+    # print('c', c)
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
     lc = tf.expand_dims(lc, axis=1) * tf.ones_like(c)
@@ -101,8 +101,8 @@ class train_one_epoch():
         R = cosine_similarity
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
-        L1 = -tf.reduce_sum(tf.math.log(PQD))
-        L2 = -tf.reduce_sum(tf.math.log(PDQ))
+        L1 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PQD, axis=0)))
+        L2 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PDQ, axis=0)))
         return L1, L2
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
@@ -118,7 +118,7 @@ class train_one_epoch():
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
             loss = L1w + L2w
-        print('L1w: {}, L2w: {}, loss: {}'.format(L1w, L2w, loss))
+        # print('L1w: {}, L2w: {}, loss: {}'.format(L1w, L2w, loss))
         self.loss(loss)
         variables = self.Attention1.variables \
                     + self.embedding_model.variables
