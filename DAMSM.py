@@ -18,9 +18,9 @@ dataset_root = '/content'
 temp_root = root+'/temp'
 
 class attention(tf.keras.Model):
-  def __init__(self, num_tokens, name):
+  def __init__(self, T, name):
     super(attention, self).__init__()
-    self.dense = layers.Dense(units=num_tokens, name=name+'_dense')
+    self.dense = layers.Dense(units=T, name=name+'_dense')
   def call(self, e, f, gamma):
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
     v = self.dense(f)
@@ -29,7 +29,7 @@ class attention(tf.keras.Model):
     s_ = tf.nn.softmax(s, axis=1)
     alpha = tf.nn.softmax(gamma*s_, axis=2)
     c = tf.matmul(v, tf.transpose(alpha, [0, 2, 1]))
-
+    print('c', c)
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
     lc = tf.expand_dims(lc, axis=1) * tf.ones_like(c)
