@@ -92,15 +92,10 @@ class train_one_epoch():
 
     def Lw_loss(self, cosine_similarity):
         R = tf.math.log(tf.math.pow(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2), 1 / self.gamma2))
-        print('R', R)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
-        print('PQD', tf.math.log(PQD))
-        print('PDQ', tf.math.log(PDQ))
-        L1 = -tf.reduce_sum(tf.math.log(PQD))
-        L2 = -tf.reduce_sum(tf.math.log(PDQ))
-        print('L1', L1)
-        print('L2', L2)
+        L1 = -tf.reduce_sum(tf.math.log(PQD)) * tf.eye(R.shape[0])
+        L2 = -tf.reduce_sum(tf.math.log(PDQ)) * tf.eye(R.shape[0])
         return L1, L2
     def Ls_loss(self, cosine_similarity):
         R = cosine_similarity
@@ -118,7 +113,7 @@ class train_one_epoch():
             f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
-            print('cosine similarity: ', cosine_similarity)
+            # print('cosine similarity: ', cosine_similarity)
             L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
