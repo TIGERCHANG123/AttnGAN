@@ -121,8 +121,8 @@ class train_one_epoch():
         # print('L1w: {}, L2w: {}, loss: {}'.format(L1w, L2w, loss))
         self.loss(loss)
         variables = self.Attention1.variables \
-                    + self.embedding_model.variables
-                    # + self.Attention2.variables \
+                    + self.embedding_model.variables \
+                    + self.Attention2.variables
 
         gradients_of_generator = tape.gradient(loss, variables)
         self.optimizer.apply_gradients(zip(gradients_of_generator, variables))
