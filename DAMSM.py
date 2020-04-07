@@ -48,11 +48,8 @@ class attention_(tf.keras.Model):
         v_ = self.dense(f_)
         v_ = v_ / tf.abs(v_)
         e_ = e_ / tf.abs(e_)
-        print('v_', v_)
-        print('e_', e_)
         v_ = tf.transpose(v_, [1, 0])
         cosine_similarity = tf.matmul(e_, v_)
-        print('cos_', cosine_similarity)
         return cosine_similarity
 
 def damsm_model(num_tokens, seq_length):
@@ -91,8 +88,8 @@ class train_one_epoch():
         print('R', tf.reduce_max(R))
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
-        print('PQD', tf.nn.softmax(self.gamma3 * R, axis=0))
-        print('PDQ', tf.nn.softmax(self.gamma3 * R, axis=1))
+        print('PQD', tf.reduce_sum(PQD, axis=0))
+        print('PDQ', tf.reduce_sum(PDQ, axis=0))
         L1 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PQD, axis=0)))
         L2 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PDQ, axis=0)))
         print('L1', L1)
