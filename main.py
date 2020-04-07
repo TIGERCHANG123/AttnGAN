@@ -31,10 +31,11 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
 
     train_dataset = dataset.get_train_dataset()
     pic = draw(10, temp_root, model_dataset, train_time=train_time)
-    Stage1_generator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-    Stage1_discriminator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-    Stage2_generator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-    Stage2_discriminator_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+    lr = 2e-4
+    Stage1_generator_optimizer = tf.keras.optimizers.Adam(lr, beta_1=0.5)
+    Stage1_discriminator_optimizer = tf.keras.optimizers.Adam(lr, beta_1=0.5)
+    Stage2_generator_optimizer = tf.keras.optimizers.Adam(lr, beta_1=0.5)
+    Stage2_discriminator_optimizer = tf.keras.optimizers.Adam(lr, beta_1=0.5)
 
     checkpoint_path = temp_root + '/temp_model_save/' + model_dataset
     embedding_checkpoint_path = temp_root + '/temp_model_save/' + '/embedding_model'
@@ -63,6 +64,8 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     for epoch in range(train_epoch):
         train.train(epoch=epoch, mid_epoch=mid_epoch, pic=pic, text_generator=dataset.get_random_text)
         pic.show()
+        if (epoch + 1) % 100 == 0:
+            lr *= 0.5
         if (epoch + 1) % 5 == 0:
             ckpt_manager.save()
         try:

@@ -140,7 +140,7 @@ def main(continue_train, train_time, train_epoch):
     Attention1=Attention1, Attention2=Attention2)
     embedding_ckpt = tf.train.Checkpoint(embedding=embedding_model)
     attn_ckpt_manager = tf.train.CheckpointManager(attn_ckpt, attn_path, max_to_keep=50)
-    embedding_ckpt_manager = tf.train.CheckpointManager(embedding_ckpt, embedding_path, max_to_keep=5)
+    embedding_ckpt_manager = tf.train.CheckpointManager(embedding_ckpt, embedding_path, max_to_keep=50)
     if attn_ckpt_manager.latest_checkpoint and continue_train:
         attn_ckpt.restore(attn_ckpt_manager.latest_checkpoint)
         print('Latest attn checkpoint restored!!')
