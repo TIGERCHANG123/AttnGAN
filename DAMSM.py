@@ -88,7 +88,7 @@ class train_one_epoch():
         return L1, L2
     def Ls_loss(self, cosine_similarity):
         R = cosine_similarity
-        print('R', tf.reduce_sum(R))
+        print('R', tf.maximum(R))
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
         print('PQD', tf.nn.softmax(self.gamma3 * R, axis=0))
