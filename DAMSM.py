@@ -71,15 +71,15 @@ class train_one_epoch():
         new_input = image_model.input
         # new_input = tf.keras.layers.Input(shape=[299, 299, 3])
         # print('shape', image_model.input.shape)
-        for layers in image_model.layers:
-            if 'mix' in layers.name or 'average' in layers.name:
-                print(layers.name)
-        # average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
-        average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'mixed9_1'][0]
+        # for layers in image_model.layers:
+        #     if 'mix' in layers.name or 'average' in layers.name:
+        #         print(layers.name)
+        average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
+        # average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'mixed9_1'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
 
         self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[mixed6.output, average_pooling2d_8.output])
-        self.InceptionV3.summary()
+        # self.InceptionV3.summary()
         self.loss = metrics
         self.train_dataset = train_dataset
         self.gamma1 = 5
@@ -112,7 +112,7 @@ class train_one_epoch():
             L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
-            loss = L1w + L2w + L1s + L2s
+            loss = L1w + L2w
         self.loss(loss)
         variables = self.Attention1.variables + self.Attention2.variables + self.embedding_model.variables
         gradients_of_generator = tape.gradient(loss, variables)
