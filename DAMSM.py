@@ -5,10 +5,8 @@ import sys
 from show_pic import draw
 from datasets.CUB import CUB_dataset
 from AttnGAN import *
-import cv2
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
-import numpy as np
 
 root = '/content/drive/My Drive'
 dataset_root = '/content'
@@ -22,18 +20,13 @@ class attention(tf.keras.Model):
     super(attention, self).__init__()
     self.dense = layers.Dense(units=T, name=name+'_dense')
   def call(self, e, f, gamma):
-    # print('e', e)
     f = tf.reshape(f, [f.shape[0], -1, f.shape[3]])
-    # print('f', f)
     v = self.dense(f)
     v = tf.transpose(v, [0, 2, 1])
-    # print('v', v)
     s = tf.matmul(tf.transpose(e, [0, 2, 1]), v)
     s_ = tf.nn.softmax(s, axis=1)
-    # print('s_', s_)
     alpha = tf.nn.softmax(gamma*s_, axis=2)
     c = tf.matmul(v, tf.transpose(alpha, [0, 2, 1]))
-    # print('c', c)
     lc = tf.math.sqrt(tf.reduce_sum(c*c, axis=1))
     le = tf.math.sqrt(tf.reduce_sum(e*e, axis=1))
     lc = tf.expand_dims(lc, axis=1) * tf.ones_like(c)
@@ -73,17 +66,10 @@ class train_one_epoch():
 
         image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
         new_input = image_model.input
-        # new_input = tf.keras.layers.Input(shape=[299, 299, 3])
-        # print('shape', image_model.input.shape)
-        # for layers in image_model.layers:
-        #     if 'mix' in layers.name or 'average' in layers.name:
-        #         print(layers.name)
         average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'average_pooling2d_8'][0]
-        # average_pooling2d_8 = [layers for layers in image_model.layers if layers.name == 'mixed9_1'][0]
         mixed6 = [layers for layers in image_model.layers if layers.name=='mixed6'][0]
 
         self.InceptionV3 = tf.keras.Model(inputs=new_input, outputs=[mixed6.output, average_pooling2d_8.output])
-        # self.InceptionV3.summary()
         self.loss = metrics
         self.train_dataset = train_dataset
         self.gamma1 = 5
@@ -92,33 +78,36 @@ class train_one_epoch():
 
     def Lw_loss(self, cosine_similarity):
         R = tf.math.log(tf.math.pow(tf.reduce_sum(tf.math.exp(self.gamma2 * cosine_similarity), axis=2), 1 / self.gamma2))
+        print('R', R)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
         L1 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PQD, axis=0)))
         L2 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PDQ, axis=0)))
+        print('L1', L1)
+        print('L2', L2)
         return L1, L2
     def Ls_loss(self, cosine_similarity):
         R = cosine_similarity
+        print('R', R)
         PQD = tf.nn.softmax(self.gamma3 * R, axis=0) * tf.eye(R.shape[0])
         PDQ = tf.nn.softmax(self.gamma3 * R, axis=1) * tf.eye(R.shape[0])
         L1 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PQD, axis=0)))
         L2 = -tf.reduce_sum(tf.math.log(tf.reduce_sum(PDQ, axis=0)))
+        print('L1', L1)
+        print('L2', L2)
         return L1, L2
     def train_step(self, images_2, text):
         with tf.GradientTape() as tape:
             img = tf.image.resize(images_2, [299, 299], 'bilinear')
             img = tf.convert_to_tensor(img)
             f, f_ = self.InceptionV3(img)
-            # print('f shape: {}, f_ shape: {}'.format(f.shape, f_.shape))
             f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
-            # print('cosine similarity: ', cosine_similarity)
             L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
             loss = L1w + L2w + L1s + L2s
-        # print('L1w: {}, L2w: {}, loss: {}'.format(L1w, L2w, loss))
         self.loss(loss)
         variables = self.Attention1.variables \
                     + self.embedding_model.variables \
