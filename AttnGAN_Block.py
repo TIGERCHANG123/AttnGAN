@@ -23,7 +23,8 @@ class attention(tf.keras.Model):
     self.dense = layers.Dense(units=units, name=name+'_dense')
   def call(self, e, h):
     # print('e shape', e.shape)
-    e_ = self.dense(tf.transpose(e, [0, 2, 1]))
+    # e_ = self.dense(tf.transpose(e, [0, 2, 1]))
+    e_ = self.dense(e)
     e_ = tf.transpose(e_, [0, 2, 1])
     # print('e_ shape', e_.shape)
     h1 = tf.transpose(h, [0, 3, 1, 2])

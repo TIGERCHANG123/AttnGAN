@@ -129,8 +129,8 @@ def main(continue_train, train_time, train_epoch):
     model_dataset = model_name + '-' + dataset.name
     train_dataset = dataset.get_train_dataset()
     pic = draw(10, temp_root, model_dataset, train_time=train_time)
-    # damsm_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
-    damsm_optimizer = tf.keras.optimizers.RMSprop(1e-4, momentum=0.1)
+    damsm_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.9)
+    # damsm_optimizer = tf.keras.optimizers.RMSprop(1e-4, momentum=0.1)
 
     attn_path = temp_root + '/temp_model_save/attn/' + model_dataset
     embedding_path = temp_root + '/temp_model_save/embedding/' + model_dataset
