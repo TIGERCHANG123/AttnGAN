@@ -109,6 +109,7 @@ class train_one_epoch():
             f_ = tf.reduce_mean(f_, axis=[1, 2])
             e, e_ = self.embedding_model(text)
             cosine_similarity = self.Attention1(e, f, self.gamma1)
+            print('cosine similarity: ', cosine_similarity)
             L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
