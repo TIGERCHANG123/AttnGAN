@@ -48,8 +48,11 @@ class attention_(tf.keras.Model):
         v_ = self.dense(f_)
         v_ = v_ / tf.abs(v_)
         e_ = e_ / tf.abs(e_)
+        print('v_', v_)
+        print('e_', e_)
         v_ = tf.transpose(v_, [1, 0])
         cosine_similarity = tf.matmul(e_, v_)
+        print('cos_', cosine_similarity)
         return cosine_similarity
 
 def damsm_model(num_tokens, seq_length):
