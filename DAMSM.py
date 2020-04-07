@@ -117,7 +117,7 @@ class train_one_epoch():
             L1w , L2w = self.Lw_loss(cosine_similarity)
             cosine_similarity_ = self.Attention2(e_, f_)
             L1s, L2s = self.Ls_loss(cosine_similarity_)
-            loss = L1w + L2w
+            loss = L1w + L2w + L1s + L2s
         # print('L1w: {}, L2w: {}, loss: {}'.format(L1w, L2w, loss))
         self.loss(loss)
         variables = self.Attention1.variables \
