@@ -60,31 +60,31 @@ class train_one_epoch():
             Stage2_gen_loss = self.generator_loss(large_fake1)\
                               + KL_loss
             # gradient apply
-            if stage1:
-                Stage1_gen_variables = [v for v in self.Generator.trainable_variables if 'h0' in v.name] \
-                                    + self.Dense_mu_sigma.trainable_variables
-                                    # + self.embedding.trainable_variables
-                Stage1_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h0' in v.name]
-                                    # + self.embedding.trainable_variables
-                gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss,Stage1_gen_variables)
-                self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
-                gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,Stage1_dist_variables)
-                self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,Stage1_dist_variables))
-                self.gen_loss(Stage1_gen_loss)
-                self.disc_loss(Stage1_disc_loss)
-            else:
-                # Stage2_gen_variables = [v for v in self.Generator.trainable_variables if 'h1' in v.name] \
-                #                        + self.Dense_mu_sigma.trainable_variables
-                # Stage2_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h1' in v.name]
-                Stage2_gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
-                Stage2_dist_variables =self.Discriminator.trainable_variables
-                gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss, Stage2_gen_variables)
-                self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage2_gen_variables))
-                gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, Stage2_dist_variables)
-                self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, Stage2_dist_variables))
 
-                self.gen_loss(Stage2_gen_loss)
-                self.disc_loss(Stage2_disc_loss)
+            Stage1_gen_variables = [v for v in self.Generator.trainable_variables if 'h0' in v.name] \
+                                + self.Dense_mu_sigma.trainable_variables
+                                # + self.embedding.trainable_variables
+            Stage1_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h0' in v.name]
+                                # + self.embedding.trainable_variables
+            gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss,Stage1_gen_variables)
+            self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
+            gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,Stage1_dist_variables)
+            # self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,Stage1_dist_variables))
+            # self.gen_loss(Stage1_gen_loss)
+            # self.disc_loss(Stage1_disc_loss)
+
+            # Stage2_gen_variables = [v for v in self.Generator.trainable_variables if 'h1' in v.name] \
+            #                        + self.Dense_mu_sigma.trainable_variables
+            # Stage2_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h1' in v.name]
+            Stage2_gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
+            Stage2_dist_variables =self.Discriminator.trainable_variables
+            gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss, Stage2_gen_variables)
+            self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage2_gen_variables))
+            gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, Stage2_dist_variables)
+            self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, Stage2_dist_variables))
+
+            self.gen_loss(Stage2_gen_loss)
+            self.disc_loss(Stage2_disc_loss)
     def train(self, epoch, mid_epoch, pic, text_generator):
         self.gen_loss.reset_states()
         self.disc_loss.reset_states()
