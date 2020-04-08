@@ -7,14 +7,18 @@ class embedding(tf.keras.Model):
     self.lstm = layers.LSTM(units=latent_dim, return_sequences=True, return_state=True)
     self.go_backwards_lstm = layers.LSTM(units=latent_dim, return_sequences=True, return_state=True, go_backwards=True)
   def call(self, text):
-    # print('text shape', text.shape)
+    # text -> R(T)
+    # code -> R(T * D_)
     code = self.embedding(text)
-    # print('code shape', code.shape)
+    # whole_sequence_output1,2 -> R(T * D), final_memory_state1,2 -> R(D)
     whole_sequence_output_1, final_memory_state_1, final_carry_state_1 = self.lstm(code)
     whole_sequence_output_2, final_memory_state_2, final_carry_state_2 = self.go_backwards_lstm(code)
 
+    # whole_sequence_output -> R(T * 2D)
     whole_sequence_output = tf.concat([whole_sequence_output_1, whole_sequence_output_2], axis=-1)
+    # whole_sequence_output -> R(2D * T)
     whole_sequence_output = tf.transpose(whole_sequence_output, [0, 2, 1])
+    # final_memory_state -> R(2D)
     final_memory_state = tf.concat([final_memory_state_1, final_memory_state_2], axis=-1)
 
     return whole_sequence_output, final_memory_state# batch_size * (word_length * 2) * seq_length, batch size * (word length * 2)
@@ -120,7 +124,7 @@ def get_gan(num_tokens):
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   Generator = Attn_generator()
   Discriminator = Attn_discriminator()
-  gen_name = 'AttnGAN_2'
+  gen_name = 'AttnGAN_Parttrain_Pretrain'
   return Dense_mu_sigma, Embedding, Generator, Discriminator, gen_name
 
 
