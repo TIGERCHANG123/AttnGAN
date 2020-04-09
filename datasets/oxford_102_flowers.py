@@ -34,6 +34,7 @@ class oxford_102_flowers_dataset():
                 lines= lines+clear_lines
         characters = set()
 
+        print(lines)
         for sentence in lines:
             for char in sentence.split(' '):
                 if char not in characters:
