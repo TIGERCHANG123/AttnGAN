@@ -22,6 +22,7 @@ class oxford_102_flowers_dataset():
         lines = []
         self.index_sentences = [None]*len(self.text_file_name)
         for file_path in self.text_file_name:
+            print(file_path)
             with open(file_path, 'r', encoding='utf-8') as f:
                 temp_lines = f.read().split('\n')
                 print(temp_lines)
