@@ -20,6 +20,7 @@ class oxford_102_flowers_dataset():
                 if ".txt" in filename:
                     self.text_file_name.append(parent+'/'+filename)
         lines = []
+        print('text file name: ', self.text_file_name)
         self.index_sentences = [None]*len(self.text_file_name)
         for file_path in self.text_file_name:
             print(file_path)
