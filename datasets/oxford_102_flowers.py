@@ -15,20 +15,16 @@ class oxford_102_flowers_dataset():
         self.name = 'oxford-102-flowers'
 
         self.text_file_name = []
-        print(root + '/datasets/oxford-102-flowers/text_c10')
         for parent, dirnames, filenames in os.walk(root + '/datasets/oxford-102-flowers/text_c10'):
             for filename in filenames:
-                print(filename)
+                # print(filename)
                 if ".txt" in filename:
                     self.text_file_name.append(parent+'/'+filename)
         lines = []
-        print('text file name: ', self.text_file_name)
         self.index_sentences = [None]*len(self.text_file_name)
         for file_path in self.text_file_name:
-            print(file_path)
             with open(file_path, 'r', encoding='utf-8') as f:
                 temp_lines = f.read().split('\n')
-                print(temp_lines)
                 clear_lines = []
                 for sentence in temp_lines:
                     line = re.sub(r'[^A-Za-z]+', ' ',sentence)
