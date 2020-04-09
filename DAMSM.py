@@ -3,7 +3,8 @@ import os
 import getopt
 import sys
 from show_pic import draw
-from datasets.CUB import CUB_dataset
+# from datasets.CUB import CUB_dataset
+from datasets.oxford_102_flowers import oxford_102_flowers_dataset
 from AttnGAN import *
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
@@ -123,7 +124,7 @@ def main(continue_train, train_time, train_epoch):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
     batch_size = 50
 
-    dataset = CUB_dataset(dataset_root,batch_size = batch_size)
+    dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
     Attention1, Attention2, embedding_model, model_name = damsm_model(dataset.num_tokens, dataset.max_seq_length)
 
     model_dataset = model_name + '-' + dataset.name

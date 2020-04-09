@@ -47,7 +47,7 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=2)
     embedding_ckpt_manager = tf.train.CheckpointManager(embedding_ckpt, embedding_checkpoint_path, max_to_keep=1)
-    embedding_ckpt.restore(embedding_ckpt_manager.checkpoints[15])
+    embedding_ckpt.restore('./embedding_model/ckpt-151')
     if ckpt_manager.latest_checkpoint and continue_train:
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('Latest checkpoint restored!!')

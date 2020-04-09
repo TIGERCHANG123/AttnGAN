@@ -59,6 +59,8 @@ class CUB_dataset():
                         temp_lines = f.read().split('\n')
                 except:
                     continue
+                if len(temp_lines) == 0:
+                    continue
                 n = np.random.randint(len(temp_lines))
                 text = temp_lines[n]
                 text = re.sub(r'[^A-Za-z]+', ' ', text)

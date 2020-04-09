@@ -3,13 +3,23 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.initializers import *
 
+class GLU(tf.keras.Model):
+    def __init__(self):
+        super(GLU, self).__init__()
+    def call(self, x):
+        nc = x.shape[3]
+        assert nc % 2 == 0, 'channels dont divide 2!'
+        nc = int(nc/2)
+        return x[:, :, :, :nc] * tf.keras.activations.sigmoid(x[:, :, :, nc:])
+
 class Input(tf.keras.Model):
   def __init__(self, shape, name):
     super(Input, self).__init__()
     self.dense = layers.Dense(shape[0] * shape[1] * shape[2], use_bias=False, kernel_initializer=RandomNormal(stddev=0.02), name=name+'_dense')
     self.reshape = layers.Reshape([shape[0], shape[1], shape[2]], name=name+'_reshape')
     self.bn = layers.BatchNormalization(momentum=0.9, name=name+'_bn')
-    self.relu = tf.keras.layers.ReLU()
+    # self.relu = tf.keras.layers.ReLU()
+    self.relu = GLU()
   def call(self, x):
     x = self.dense(x)
     x = self.reshape(x)
@@ -58,8 +68,10 @@ class Resdual_Block(tf.keras.Model):
                                          kernel_initializer=RandomNormal(stddev=0.02), name=name+'_conv2')
       self.bn1 = tf.keras.layers.BatchNormalization(name=name+'_bn1')
       self.bn2 = tf.keras.layers.BatchNormalization(name=name+'_bn2')
-      self.Relu1 = tf.keras.layers.ReLU(name=name+'_relu1')
-      self.Relu2 = tf.keras.layers.ReLU(name=name+'_relu2')
+      # self.Relu1 = tf.keras.layers.ReLU(name=name+'_relu1')
+      # self.Relu2 = tf.keras.layers.ReLU(name=name+'_relu2')
+      self.Relu1 = GLU()
+      # self.Relu2 = GLU()
   def call(self, x):
       y = self.conv1(x)
       y = self.bn1(y)
@@ -67,19 +79,20 @@ class Resdual_Block(tf.keras.Model):
       y = self.conv2(y)
       y = self.bn2(y)
       y = y + x
-      y = self.Relu2(y)
+      # y = self.Relu2(y)
       return y
 
 
 class deconv(tf.keras.Model):
   def __init__(self, filters, strides, padding, name):
       super(deconv, self).__init__()
-      self.conv = layers.Conv2DTranspose(filters, kernel_size=5,
+      self.conv = layers.Conv2DTranspose(filters, kernel_size=3,
                                          strides=strides, padding=padding,
                                          use_bias=False, name=name+'_conv',
                                          kernel_initializer=RandomNormal(stddev=0.02))
       self.bn = layers.BatchNormalization(momentum=0.9, name=name+'_bn')
-      self.relu = tf.keras.layers.ReLU(name=name+'_relu')
+      # self.relu = tf.keras.layers.ReLU(name=name+'_relu')
+      self.relu = GLU()
   def call(self, x):
       x = self.conv(x)
       x = self.bn(x)
@@ -99,9 +112,9 @@ class generator_Output(tf.keras.Model):
     return x
 
 class discriminator_Input(tf.keras.Model):
-  def __init__(self, filters, strides, name):
+  def __init__(self, filters, kernel_size, strides, name):
     super(discriminator_Input, self).__init__()
-    self.conv = keras.layers.Conv2D(filters, kernel_size=5, strides=strides, name=name+'_conv',
+    self.conv = keras.layers.Conv2D(filters, kernel_size=kernel_size, strides=strides, name=name+'_conv',
                                     padding="same", kernel_initializer=RandomNormal(stddev=0.02))
     self.leakyRelu = keras.layers.LeakyReLU(alpha=0.2, name=name+'_leakyRelu')
     # self.dropout = keras.layers.Dropout(0.3)
