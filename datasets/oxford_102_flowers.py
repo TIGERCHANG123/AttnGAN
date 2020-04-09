@@ -17,6 +17,7 @@ class oxford_102_flowers_dataset():
         self.text_file_name = []
         for parent, dirnames, filenames in os.walk(root + '/datasets/oxford-102-flowers/text_c10'):
             for filename in filenames:
+                print(filename)
                 if ".txt" in filename:
                     self.text_file_name.append(parent+'/'+filename)
         lines = []
