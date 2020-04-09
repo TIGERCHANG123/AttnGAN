@@ -24,6 +24,7 @@ class oxford_102_flowers_dataset():
         for file_path in self.text_file_name:
             with open(file_path, 'r', encoding='utf-8') as f:
                 temp_lines = f.read().split('\n')
+                print(temp_lines)
                 clear_lines = []
                 for sentence in temp_lines:
                     line = re.sub(r'[^A-Za-z]+', ' ',sentence)
