@@ -51,7 +51,7 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     if ckpt_manager.latest_checkpoint and continue_train:
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('Latest checkpoint restored!!')
-    embedding_ckpt.restore(root+'/AttnGAN/embedding_model/'+dataset.name+'/ckpt-223')
+    embedding_ckpt.restore(dataset_root+'/AttnGAN/embedding_model/'+dataset.name+'/ckpt-223')
 
     gen_loss = tf.keras.metrics.Mean(name='gen_loss')
     disc_loss = tf.keras.metrics.Mean(name='disc_loss')
