@@ -23,8 +23,8 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     noise_dim = 100
     batch_size = 48
 
-    # dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
-    dataset = CUB_dataset(dataset_root,batch_size = batch_size)
+    dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
+    # dataset = CUB_dataset(dataset_root,batch_size = batch_size)
     Dense_mu_sigma_model, embedding_model,  Generator, Discriminator, model_name = get_gan(dataset.num_tokens)
 
     model_dataset = model_name + '-' + dataset.name
@@ -38,7 +38,7 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     Stage2_discriminator_optimizer = tf.keras.optimizers.Adam(lr, beta_1=0.5)
 
     checkpoint_path = temp_root + '/temp_model_save/' + model_dataset
-    embedding_checkpoint_path = './embedding_model'
+    embedding_checkpoint_path = './embedding_model/' + dataset.name
     ckpt = tf.train.Checkpoint(Stage1_genetator_optimizer=Stage1_generator_optimizer,
     Stage1_discriminator_optimizer=Stage1_discriminator_optimizer,
     Stage2_genetator_optimizer=Stage2_generator_optimizer, Stage2_discriminator_optimizer=Stage2_discriminator_optimizer,
@@ -47,10 +47,11 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=2)
     embedding_ckpt_manager = tf.train.CheckpointManager(embedding_ckpt, embedding_checkpoint_path, max_to_keep=1)
-    embedding_ckpt.restore('./embedding_model/ckpt-151')
+    
     if ckpt_manager.latest_checkpoint and continue_train:
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('Latest checkpoint restored!!')
+    embedding_ckpt.restore('./embedding_model/'+dataset.name+'/ckpt-223')
 
     gen_loss = tf.keras.metrics.Mean(name='gen_loss')
     disc_loss = tf.keras.metrics.Mean(name='disc_loss')

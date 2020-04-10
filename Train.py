@@ -34,8 +34,7 @@ class train_one_epoch():
         return loss
 
     def train_step(self, noise, images_1, images_2, text, text_generator, stage1):
-        with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, \
-                tf.GradientTape() as Stage2_gen_tape, tf.GradientTape() as Stage2_disc_tape:
+        with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, tf.GradientTape() as Stage2_disc_tape:
             sequence, memory_state = self.embedding(text)
             mu_1, sigma_1 = self.Dense_mu_sigma(memory_state)
             KL_loss = self.KL_loss(mu_1, sigma_1)
@@ -57,26 +56,19 @@ class train_one_epoch():
             Stage2_disc_loss, Stage2_real_loss, Stage2_fake_loss1, Stage2_fake_loss2 \
                 = self.discriminator_loss(large_real, large_fake1, large_fake2)
             Stage2_gen_loss = self.generator_loss(large_fake1)
-            # gradient apply
+            gen_loss_total = Stage1_gen_loss + Stage2_gen_loss
 
-        Stage1_gen_variables = [v for v in self.Generator.trainable_variables if 'h0' in v.name] \
-                            + self.Dense_mu_sigma.trainable_variables
         Stage1_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h0' in v.name]
-        gradients_of_generator = Stage1_gen_tape.gradient(Stage1_gen_loss,Stage1_gen_variables)
-        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
         gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,Stage1_dist_variables)
         self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,Stage1_dist_variables))
-        # self.gen_loss(Stage1_gen_loss)
-        # self.disc_loss(Stage1_disc_loss)
 
-        # Stage2_gen_variables = [v for v in self.Generator.trainable_variables if 'h1' in v.name] \
         Stage2_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h1' in v.name]
-        Stage2_gen_variables = [v for v in self.Generator.trainable_variables if 'h0_output' not in v.name]
-
-        gradients_of_generator = Stage2_gen_tape.gradient(Stage2_gen_loss, Stage2_gen_variables)
-        self.Stage2_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage2_gen_variables))
         gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, Stage2_dist_variables)
         self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, Stage2_dist_variables))
+
+        Stage1_gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
+        gradients_of_generator = Stage1_gen_tape.gradient(gen_loss_total, Stage1_gen_variables)
+        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
 
         self.gen_loss(Stage2_gen_loss)
         self.disc_loss(Stage2_disc_loss)

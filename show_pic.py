@@ -33,6 +33,8 @@ class draw:
     self.train_loss_list = []
     self.train_acc_list = []
     self.i = 0
+    self.large_pic_list=[]
+    self.small_pic_list=[]
   def add(self, train_log):
     if len(self.batch_list) != 0:
       self.i = self.batch_list[-1] + 1
@@ -106,8 +108,18 @@ class draw:
     y0 = (y0 + 1) / 2
     y1 = (y1+1)/2
     for i in range(pic_num):
-      cv2.imwrite(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),
-                  (y0[i].numpy()*255).astype(np.uint8))
-      cv2.imwrite(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),
-                  (y1[i].numpy()*255).astype(np.uint8))
+      b, g, r = cv2.split((y0[i].numpy()*255).astype(np.uint8))
+      img = cv2.merge([r, g, b])
+      cv2.imwrite(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),img)
+      b, g, r = cv2.split((y1[i].numpy() * 255).astype(np.uint8))
+      img = cv2.merge([r, g, b])
+      cv2.imwrite(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),img)
+      self.large_pic_list.append(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]))
+      self.small_pic_list.append(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]))
+    if len(self.large_pic_list) > 50:
+      for i in range(pic_num):
+        pic_path = self.large_pic_list.pop(0)
+        os.remove(pic_path)
+        pic_path = self.small_pic_list.pop(0)
+        os.remove(pic_path)
     return

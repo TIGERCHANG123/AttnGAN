@@ -137,7 +137,8 @@ def get_gan(num_tokens):
   Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   Generator = Attn_generator()
   Discriminator = Attn_discriminator()
-  gen_name = 'AttnGAN_GLU_no_ResAct'
+  # genenrator的激活函数中使用GLU，res block中最终输出不使用激活函数，各个genenrator的loss加在一起统一后向传播。
+  gen_name = 'AttnGAN_GLU_noResAct_oneLoss'
   return Dense_mu_sigma, Embedding, Generator, Discriminator, gen_name
 
 
