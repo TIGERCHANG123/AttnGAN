@@ -81,13 +81,13 @@ class Attn_discriminator(tf.keras.Model):
     super(Attn_discriminator, self).__init__()
 
     self.input_layer_0 = discriminator_Input(filters=32, name='h0_input')
-    self.conv_0 = layers.Conv2D(filters=32*8,kernel_size=3, strides=1, name='h1_conv',
+    self.conv_0 = layers.Conv2D(filters=32*8,kernel_size=3, strides=1, name='h0_conv',
                                        padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
     self.output_layer_0 = discriminator_Output(name='h0_output')#3*64*64
 
     self.input_layer_1 = discriminator_Input(filters=32, name='h1_input')
     self.middle_1 = conv(kernel_size=4, filters=32*16, strides=2, padding='same', name='h1_middle')
-    self.conv_1 = layers.Conv2D(filters=32*8,kernel_size=3, strides=1, name='h1_conv',
+    self.conv_1 = layers.Conv2D(filters=32*8,kernel_size=3, strides=1, name='h1_output_conv',
                                        padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
     self.output_layer_1 = discriminator_Output(name='h1_output')  # 3*64*64
   def call(self, text_embedding, image_0, image_1):
