@@ -12,10 +12,10 @@ from datasets.CUB import CUB_dataset
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
-# root = '/home/tigerc'
-root = '/content/drive/My Drive'
-dataset_root = '/content'
-# dataset_root = '/home/tigerc'
+root = '/home/tigerc'
+# root = '/content/drive/My Drive'
+# dataset_root = '/content'
+dataset_root = '/home/tigerc'
 temp_root = root+'/temp'
 
 def main(continue_train, train_time, train_epoch, mid_epoch):
@@ -23,8 +23,8 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     noise_dim = 100
     batch_size = 48
 
-    dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
-    # dataset = CUB_dataset(dataset_root,batch_size = batch_size)
+    # dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
+    dataset = CUB_dataset(dataset_root,batch_size = batch_size)
     Dense_mu_sigma_model, embedding_model,  Generator, Discriminator, model_name = get_gan(dataset.num_tokens)
 
     model_dataset = model_name + '-' + dataset.name
@@ -51,8 +51,8 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     if ckpt_manager.latest_checkpoint and continue_train:
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('Latest checkpoint restored!!')
-    embedding_ckpt.restore(dataset_root+'/AttnGAN/embedding_model/'+dataset.name+'/ckpt-223')
-
+    # embedding_ckpt.restore(dataset_root+'/AttnGAN/embedding_model/'+dataset.name+'/ckpt-223')
+    embedding_ckpt.restore('./embedding_model/' + dataset.name + '/ckpt-151')
     gen_loss = tf.keras.metrics.Mean(name='gen_loss')
     disc_loss = tf.keras.metrics.Mean(name='disc_loss')
 

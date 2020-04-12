@@ -13,10 +13,23 @@ class CUB_dataset():
         self.birds_list = os.listdir(self.pic_path)
         self.name = 'CUB_birds'
         self.path_list = []
+        self.bounding_boxes=[]
+        self.image_dict=dict()
+        with open(root + '/datasets/CUB/CUB_200_2011/bounding_boxes.txt', 'r', encoding='utf-8') as f:
+            temp_lines = f.read().split('\n')
+            for i in range(len(temp_lines)-1):
+                image_id, x, y, width, height = temp_lines[i].split(' ')
+                self.bounding_boxes.append([int(float(x)), int(float(y)), int(float(width)), int(float(height))])
+        with open(root + '/datasets/CUB/CUB_200_2011/images.txt', 'r', encoding='utf-8') as f:
+            temp_lines = f.read().split('\n')
+            for i in range(len(temp_lines)-1):
+                image_id, image_name = temp_lines[i].split(' ')
+                self.image_dict[image_name] = int(float(image_id))
         for bird in self.birds_list:
             for parent, dirnames, filenames in os.walk(self.pic_path + '/' + bird):
                 for filename in filenames:
                     self.path_list.append(bird + '/' + filename.split('.')[0])
+        # print('{}.jpg'.format(self.path_list[0]), self.image_dict['{}.jpg'.format(self.path_list[0])])
         lines=[]
         for file_path in self.path_list:
             file_path = self.attribute_path + '/' + file_path + '.txt'
@@ -43,6 +56,17 @@ class CUB_dataset():
         self.token_index = dict(
                     [(char, i) for i, char in enumerate(characters)])
         self.index_token = characters
+    def custom_crop(self, img, bbox):
+        imsiz = img.shape  # [height, width, channel]
+        center_x = int((2 * bbox[0] + bbox[2]) / 2)
+        center_y = int((2 * bbox[1] + bbox[3]) / 2)
+        R = int(np.maximum(bbox[2], bbox[3]) * 0.75)
+        y1 = np.maximum(0, center_y - R)
+        y2 = np.minimum(imsiz[0], center_y + R)
+        x1 = np.maximum(0, center_x - R)
+        x2 = np.minimum(imsiz[1], center_x + R)
+        img_cropped = img[y1:y2, x1:x2, :]
+        return img_cropped
     def generator(self):
         for name in self.path_list:
             try:
@@ -50,9 +74,9 @@ class CUB_dataset():
             except:
                 continue
             if not img is None:
+                x, y, width, height = self.bounding_boxes[self.image_dict['{}.jpg'.format(self.path_list[0])]]
+                img = self.custom_crop(img, [x, y, width, height])
                 img = cv2.resize(img, (self.image_width, self.image_width), interpolation=cv2.INTER_AREA)
-                # b, g, r = cv2.split(img)
-                # img_1 = cv2.merge([r, g, b])
                 img_2 = cv2.resize(img, (int(self.image_width/2), int(self.image_width/2)), interpolation=cv2.INTER_AREA)
                 try:
                     with open('{}/{}.txt'.format(self.attribute_path, name), 'r', encoding='utf-8') as f:
@@ -139,7 +163,6 @@ class noise_generator():
 if __name__ == '__main__':
     root = 'D:/Automatic/SRTP/GAN'
     self = CUB_dataset(root, 128)
-    # dataset.generator()
-    text_list = self.get_random_text(8)
-    for text in text_list:
-        print(text)
+    dataset = self.get_train_dataset()
+    img_2, img, text_code = next(iter(dataset))
+    cv2.imshow('img', img_2[0].numpy())

@@ -28,12 +28,13 @@ class generate_condition(tf.keras.Model):
     super(generate_condition, self).__init__()
     self.units = units
     self.flatten = tf.keras.layers.Flatten()
-    self.Dense = tf.keras.layers.Dense(units)
-    self.leakyRelu = tf.keras.layers.LeakyReLU(alpha=0.2)
+    self.Dense = tf.keras.layers.Dense(units * 2)
+    # self.leakyRelu = tf.keras.layers.LeakyReLU(alpha=0.2)
   def call(self, x):
     x = self.flatten(x)
     x = self.Dense(x)
-    x = self.leakyRelu(x)
+    # x = self.leakyRelu(x)
+    x = x[:, :self.units] * tf.keras.activations.sigmoid(x[:, self.units:])
     return x[:, :int(self.units/2)], x[:, int(self.units/2):]
 
 class Attn_generator(tf.keras.Model):
@@ -84,7 +85,11 @@ class Attn_discriminator(tf.keras.Model):
       discriminator_Middle(kernel_size=4, filters=128, strides=2, padding='same', name='h0_middle2'),
       discriminator_Middle(kernel_size=4, filters=256, strides=2, padding='same', name='h0_middle3'),
     ]
-    self.pre_output_0 = discriminator_Middle(kernel_size=4, filters=512, strides=2, padding='same', name='h0_pre_output')
+    self.pre_output_0 = [
+      discriminator_Middle(kernel_size=4, filters=512, strides=2, padding='same', name='h0_pre_output'),
+      discriminator_Middle(kernel_size=3, filters=256, strides=1, padding='same', name='h0_pre_output'),
+    ]
+
     self.output_layer_0 = discriminator_Output(with_activation=False, name='h0_output')#3*64*64
 
     self.input_layer_1 = discriminator_Input(filters=32, kernel_size=4, strides=2, name='h1_input')
@@ -94,7 +99,9 @@ class Attn_discriminator(tf.keras.Model):
       discriminator_Middle(kernel_size=4, filters=256, strides=2, padding='same', name='h1_middle3'),  # 256*16*16
       discriminator_Middle(kernel_size=4, filters=512, strides=2, padding='same', name='h1_middle3'),  # 256*16*16
     ]
-    self.pre_output_1 = discriminator_Middle(kernel_size=4, filters=1024, strides=2, padding='same',name='h1_pre_output')
+    self.pre_output_1 = [
+      discriminator_Middle(kernel_size=4, filters=1024, strides=2, padding='same',name='h1_pre_output'),
+      discriminator_Middle(kernel_size=3, filters=512, strides=1, padding='same',name='h1_pre_output')]
     self.output_layer_1 = discriminator_Output(with_activation=False, name='h1_output')  # 3*64*64
   def call(self, text_embedding, image_0, image_1):
     # image_0 -> R(64 * 64 * 3)
@@ -115,7 +122,8 @@ class Attn_discriminator(tf.keras.Model):
     # x0 -> R(8 * 8 * (256+D))
     x0 = tf.concat([x0, image_text0], axis=-1)
     # x0 -> R(4 * 4 * 512)
-    x0 = self.pre_output_0(x0)
+    for i in range(len(self.pre_output_0)):
+      x0 = self.pre_output_0[i](x0)
     output0 = self.output_layer_0(x0)
 
     # image_1 -> R(128 * 128 * 3)
@@ -128,7 +136,8 @@ class Attn_discriminator(tf.keras.Model):
     image_text1 = ones1 * code
     x1 = tf.concat([x1, image_text1], axis=-1)
     # x1 -> (4 * 4 * 1024)
-    x1 = self.pre_output_1(x1)
+    for i in range(len(self.pre_output_1)):
+      x1 = self.pre_output_1[i](x1)
     output1 = self.output_layer_1(x1)
     return output0, output1
 
@@ -138,7 +147,7 @@ def get_gan(num_tokens):
   Generator = Attn_generator()
   Discriminator = Attn_discriminator()
   # genenrator的激活函数中使用GLU，res block中最终输出不使用激活函数，各个genenrator的loss加在一起统一后向传播。
-  gen_name = 'AttnGAN_GLU_noResAct_oneLoss'
+  gen_name = 'AttnGAN'
   return Dense_mu_sigma, Embedding, Generator, Discriminator, gen_name
 
 
