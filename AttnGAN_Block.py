@@ -64,7 +64,7 @@ class Resdual_Block(tf.keras.Model):
       y = self.Relu1(y)
       # y -> R(w * h * filters/2)
       y = self.conv2(y)
-      # y -> R(w * h * filters/2)
+      # y -> R(w * h * filters)
       y = self.bn2(y)
       y = y + x
       return y
@@ -141,7 +141,7 @@ class discriminator_Input(tf.keras.Model):
     # x -> R(w/2 * h/2 * filters)
     x = self.leakyRelu(x)
     for i in range(len(self.middle_list)):
-      x = self.middle_list_0[i](x)
+      x = self.middle_list[i](x)
     # x -> R(w/16 * h/16 * filters*8)
     return x
 

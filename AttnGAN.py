@@ -49,8 +49,8 @@ class Attn_generator(tf.keras.Model):
     ]
     self.attention = attention(32, name='h1_attn')
     self.deconv_list_2 = [
-      Resdual_Block(128, name='h1_res1'),
-      Resdual_Block(128, name='h1_res2'),
+      Resdual_Block(64, name='h1_res1'),
+      Resdual_Block(64, name='h1_res2'),
       deconv(filters=64, strides=2, padding='same', name='h1_deconv'),
     ]
     self.output_0 = generator_Output(image_depth=3, strides=1, padding='same', name='h0_output')#3*64*64
