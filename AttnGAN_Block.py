@@ -146,16 +146,30 @@ class discriminator_Input(tf.keras.Model):
     return x
 
 class discriminator_Output(tf.keras.Model):
-  def __init__(self, name):
+  def __init__(self, ndf, name):
       super(discriminator_Output, self).__init__()
-
-      self.flatten = tf.keras.layers.Flatten(name=name+'_flatten')
-      self.dense = tf.keras.layers.Dense(units=1, activation='sigmoid',
-                                           name=name+'output', kernel_initializer=RandomNormal(stddev=0.02))
-  def call(self, x):
-      y1 = self.flatten(x)
-      y1 = self.dense(y1)
-      return y1
+      self.jointConv = layers.Conv2D(filters=ndf * 8, kernel_size=3, strides=1, name=name+'Jointconv',
+                                       padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
+      self.conv = layers.Conv2D(1, kernel_size=4, strides=4, name=name + '_conv',
+                                padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
+      self.actv = tf.keras.activations.sigmoid
+  def call(self, x, text_embedding):
+      # text_embedding -> R(D)
+      code = tf.expand_dims(text_embedding, axis=1)
+      code = tf.expand_dims(code, axis=2)
+      # code -> R(1 * 1 * D)
+      ones0 = tf.ones(shape=[1, x.shape[1], x.shape[2], 1], dtype=x.dtype)
+      # ones0 -> R(4 * 4 * ndf*8)
+      image_text0 = ones0 * code
+      # image_text0 -> R(4 * 4 * D)
+      x = tf.concat([x, image_text0], axis=-1)
+      # x -> R(4 * 4 * (ndf*8+D))
+      x = self.jointConv(x)
+      # x -> R(4 * 4 * ndf*8)
+      y = self.conv(x)
+      # y -> R(1 * 1 * 1)
+      y = self.actv(y)
+      return y
 
 
 
