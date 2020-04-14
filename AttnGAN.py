@@ -20,9 +20,6 @@ class embedding(tf.keras.Model):
     whole_sequence_output = tf.transpose(whole_sequence_output, [0, 2, 1])
     # whole_sequence_output -> R(2D * T)
     final_memory_state = tf.concat([final_memory_state_1, final_memory_state_2], axis=-1)
-    final_memory_state = tf.transpose(final_memory_state, [1, 0])
-    final_memory_state = tf.reshape(final_memory_state, [whole_sequence_output.shape[0], whole_sequence_output.shape[1]])
-
     # final_memory_state -> R(2D)
     return whole_sequence_output, final_memory_state
     # batch_size * (word_length * 2) * seq_length, batch size * (word length * 2)

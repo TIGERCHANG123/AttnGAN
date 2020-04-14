@@ -116,12 +116,12 @@ class draw:
       # img = cv2.merge([r, g, b])
       img = (y1[i].numpy() * 255).astype(np.uint8)
       cv2.imwrite(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]),img)
-      # self.large_pic_list.append(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]))
-      # self.small_pic_list.append(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]))
-    # if len(self.large_pic_list) > 50:
-    #   for i in range(pic_num):
-    #     pic_path = self.large_pic_list.pop(0)
-    #     os.remove(pic_path)
-    #     pic_path = self.small_pic_list.pop(0)
-    #     os.remove(pic_path)
+      self.large_pic_list.append(self.generated_small_pic_path+'/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]))
+      self.small_pic_list.append(self.generated_large_pic_path + '/{}_{}_{}_{}.png'.format(self.train_time, epoch, i, sentence[i]))
+    if len(self.large_pic_list) > 50:
+      for i in range(pic_num):
+        pic_path = self.large_pic_list.pop(0)
+        os.remove(pic_path)
+        pic_path = self.small_pic_list.pop(0)
+        os.remove(pic_path)
     return
