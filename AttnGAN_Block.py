@@ -12,7 +12,6 @@ class GLU(tf.keras.Model):
         nc = int(nc/2)
         return x[:, :, :, :nc] * tf.keras.activations.sigmoid(x[:, :, :, nc:])
 
-
 class conv(tf.keras.Model):
     def __init__(self, kernel_size, filters, strides, padding, name):
         super(conv, self).__init__()
@@ -29,17 +28,20 @@ class conv(tf.keras.Model):
 
 
 class deconv(tf.keras.Model):
-    def __init__(self, filters, strides, padding, name):
+    def __init__(self, filters, name):
         super(deconv, self).__init__()
-        self.conv = layers.Conv2DTranspose(filters, kernel_size=3,
-                                           strides=strides, padding=padding,
-                                           use_bias=False, name=name + '_conv',
-                                           kernel_initializer=RandomNormal(stddev=0.02))
+        self.upsample = layers.UpSampling2D(2,  interpolation='nearest')
+        self.conv = tf.keras.layers.Conv2D(filters, kernel_size=3, strides=1, name=name + '_conv',
+                                           padding='same', kernel_initializer=RandomNormal(stddev=0.02))
+        # self.conv = layers.Conv2DTranspose(filters, kernel_size=3,
+        #                                    strides=2, padding='same',
+        #                                    use_bias=False, name=name + '_conv',
+        #                                    kernel_initializer=RandomNormal(stddev=0.02))
         self.bn = layers.BatchNormalization(momentum=0.9, name=name + '_bn')
-        # self.relu = tf.keras.layers.ReLU(name=name+'_relu')
         self.relu = GLU()
 
     def call(self, x):
+        x = self.upsample(x)
         x = self.conv(x)
         x = self.bn(x)
         x = self.relu(x)
@@ -102,22 +104,22 @@ class generator_Input(tf.keras.Model):
   def __init__(self, shape, name):
     super(generator_Input, self).__init__()
     self.dense = layers.Dense(shape[0] * shape[1] * shape[2], use_bias=False, kernel_initializer=RandomNormal(stddev=0.02), name=name+'_dense')
-    self.reshape = layers.Reshape([shape[0], shape[1], shape[2]], name=name+'_reshape')
-    self.bn = layers.BatchNormalization(momentum=0.9, name=name+'_bn')
+    self.bn = layers.BatchNormalization(momentum=0.9, name=name + '_bn')
+    self.reshape = layers.Reshape([shape[0], shape[1], shape[2]//2], name=name+'_reshape')
     # self.relu = tf.keras.layers.ReLU()
-    self.relu = GLU()
+    # self.relu = GLU()
   def call(self, x):
     x = self.dense(x)
-    x = self.reshape(x)
     x = self.bn(x)
-    x = self.relu(x)
+    x= x[:, :x.shape[1]//2] * tf.keras.activations.sigmoid(x[:, x.shape[1]//2:])
+    x = self.reshape(x)
     return x
 
 class generator_Output(tf.keras.Model):
-  def __init__(self, image_depth, strides, padding, name):
+  def __init__(self, name):
     super(generator_Output, self).__init__()
-    self.conv = layers.Conv2D(image_depth,kernel_size=3, strides=strides, name=name+'_conv',
-                                       padding=padding, use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
+    self.conv = layers.Conv2D(3,kernel_size=3, strides=1, name=name+'_conv',
+                                       padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
     self.actv = layers.Activation(activation='tanh', name=name+'_tan')
   def call(self, x):
     x = self.conv(x)
@@ -151,15 +153,14 @@ class discriminator_Output(tf.keras.Model):
       self.jointConv = layers.Conv2D(filters=ndf * 8, kernel_size=3, strides=1, name=name+'Jointconv',
                                        padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
       self.conv = layers.Conv2D(1, kernel_size=4, strides=4, name=name + '_conv',
-                                padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
-      self.actv = tf.keras.activations.sigmoid
+                                padding='valid', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
   def call(self, x, text_embedding):
       # text_embedding -> R(D)
       code = tf.expand_dims(text_embedding, axis=1)
       code = tf.expand_dims(code, axis=2)
       # code -> R(1 * 1 * D)
       ones0 = tf.ones(shape=[1, x.shape[1], x.shape[2], 1], dtype=x.dtype)
-      # ones0 -> R(4 * 4 * ndf*8)
+      # ones0 -> R(4 * 4 * 1)
       image_text0 = ones0 * code
       # image_text0 -> R(4 * 4 * D)
       x = tf.concat([x, image_text0], axis=-1)
@@ -168,8 +169,9 @@ class discriminator_Output(tf.keras.Model):
       # x -> R(4 * 4 * ndf*8)
       y = self.conv(x)
       # y -> R(1 * 1 * 1)
-      y = self.actv(y)
-      return y
+      y = tf.keras.activations.sigmoid(y)
+      # print('mean y: ', (tf.reduce_mean(y)).numpy())
+      return tf.squeeze(y)
 
 
 

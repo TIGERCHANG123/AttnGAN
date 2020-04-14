@@ -21,7 +21,7 @@ temp_root = root+'/temp'
 def main(continue_train, train_time, train_epoch, mid_epoch):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
     noise_dim = 100
-    batch_size = 48
+    batch_size = 32
 
     # dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
     dataset = CUB_dataset(dataset_root,batch_size = batch_size)
@@ -53,6 +53,7 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
         print('Latest checkpoint restored!!')
     # embedding_ckpt.restore(dataset_root+'/AttnGAN/embedding_model/'+dataset.name+'/ckpt-223')
     embedding_ckpt.restore('./embedding_model/' + dataset.name + '/ckpt-173')
+    # embedding_ckpt.restore('./embedding_model/' + dataset.name + '/ckpt-223')
     gen_loss = tf.keras.metrics.Mean(name='gen_loss')
     disc_loss = tf.keras.metrics.Mean(name='disc_loss')
 
@@ -65,8 +66,8 @@ def main(continue_train, train_time, train_epoch, mid_epoch):
     for epoch in range(train_epoch):
         train.train(epoch=epoch, mid_epoch=mid_epoch, pic=pic, text_generator=dataset.get_random_text)
         pic.show()
-        if (epoch + 1) % 100 == 0:
-            lr *= 0.5
+        # if (epoch + 1) % 100 == 0:
+        #     lr *= 0.5
         if (epoch + 1) % 5 == 0:
             ckpt_manager.save()
         try:

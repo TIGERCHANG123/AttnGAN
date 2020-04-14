@@ -17,7 +17,7 @@ class train_one_epoch():
         self.grad_penalty = 0
 
     def discriminator_loss(self, real_output, fake_output1, fake_output2):
-        cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=False)
         real_loss = cross_entropy(tf.ones_like(real_output), real_output)
         fake_loss1 = cross_entropy(tf.zeros_like(fake_output1), fake_output1)
         fake_loss2 = cross_entropy(tf.zeros_like(fake_output2), fake_output2)
@@ -25,7 +25,7 @@ class train_one_epoch():
         return total_loss, real_loss, fake_loss1, fake_loss2
 
     def generator_loss(self, fake_output):
-        cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=False)
         return cross_entropy(tf.ones_like(fake_output), fake_output)
 
     def KL_loss(self, mu, log_sigma):
@@ -33,7 +33,7 @@ class train_one_epoch():
         loss = tf.reduce_mean(loss)
         return loss
 
-    def train_step(self, noise, images_1, images_2, text, text_generator, stage1):
+    def train_step(self, noise, images_1, images_2, text, text_generator):
         with tf.GradientTape() as Stage1_gen_tape, tf.GradientTape() as Stage1_disc_tape, tf.GradientTape() as Stage2_disc_tape:
             sequence, memory_state = self.embedding(text)
             mu_1, sigma_1 = self.Dense_mu_sigma(memory_state)
@@ -52,12 +52,13 @@ class train_one_epoch():
             # loss calculation
             Stage1_disc_loss, Stage1_real_loss, Stage1_fake_loss1, Stage1_fake_loss2 \
                 = self.discriminator_loss(small_real, small_fake1, small_fake2)
-            Stage1_gen_loss = self.generator_loss(small_fake1) + KL_loss
+
             Stage2_disc_loss, Stage2_real_loss, Stage2_fake_loss1, Stage2_fake_loss2 \
                 = self.discriminator_loss(large_real, large_fake1, large_fake2)
+
+            Stage1_gen_loss = self.generator_loss(small_fake1) + KL_loss
             Stage2_gen_loss = self.generator_loss(large_fake1)
             gen_loss_total = Stage1_gen_loss + Stage2_gen_loss
-
         Stage1_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h0' in v.name]
         gradients_of_discriminator = Stage1_disc_tape.gradient(Stage1_disc_loss,Stage1_dist_variables)
         self.Stage1_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator,Stage1_dist_variables))
@@ -65,20 +66,20 @@ class train_one_epoch():
         Stage2_dist_variables = [v for v in self.Discriminator.trainable_variables if 'h1' in v.name]
         gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, Stage2_dist_variables)
         self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, Stage2_dist_variables))
+        self.disc_loss(Stage2_disc_loss + Stage1_disc_loss)
 
-        Stage1_gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
-        gradients_of_generator = Stage1_gen_tape.gradient(gen_loss_total, Stage1_gen_variables)
-        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
+        gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
+        gradients_of_generator = Stage1_gen_tape.gradient(gen_loss_total, gen_variables)
+        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, gen_variables))
+        self.gen_loss(gen_loss_total)
 
-        self.gen_loss(Stage2_gen_loss)
-        self.disc_loss(Stage2_disc_loss)
     def train(self, epoch, mid_epoch, pic, text_generator):
         self.gen_loss.reset_states()
         self.disc_loss.reset_states()
 
         for (batch, (image_1, image_2, text)) in enumerate(self.train_dataset):
             noise = tf.random.normal([image_1.shape[0], self.noise_dim], dtype=tf.float32)
-            self.train_step(noise, image_1, image_2, text, text_generator, epoch<mid_epoch)
+            self.train_step(noise, image_1, image_2, text, text_generator)
             pic.add([self.gen_loss.result().numpy(), self.disc_loss.result().numpy()])
             pic.save()
             if batch % 100 == 0:

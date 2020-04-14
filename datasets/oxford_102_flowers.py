@@ -52,9 +52,9 @@ class oxford_102_flowers_dataset():
           if not img is None:
             index=int(name.split('_')[1].split('.')[0])-1
             img = cv2.resize(img, (self.image_width, self.image_width), interpolation=cv2.INTER_AREA)
-            b, g, r = cv2.split(img)
-            img_1 = cv2.merge([r, g, b])
-            img_2 = cv2.resize(img_1, (int(self.image_width/2), int(self.image_width/2)), interpolation=cv2.INTER_AREA)
+            # b, g, r = cv2.split(img)
+            # img_1 = cv2.merge([r, g, b])
+            img_2 = cv2.resize(img, (int(self.image_width/2), int(self.image_width/2)), interpolation=cv2.INTER_AREA)
             # print('index: {}, len sentences: {}'.format(index, len(self.index_sentences)))
 
             text_code_list = []
@@ -63,7 +63,7 @@ class oxford_102_flowers_dataset():
             text_code = np.zeros((self.max_seq_length,), dtype='float32')
             for i, token in enumerate(text.split(' ')):
                 text_code[i] = self.token_index[token]
-            yield img_2, img_1, text_code
+            yield img_2, img, text_code
     def parse(self, img_1, img_2, text):
         img_1 = tf.cast(img_1, tf.float32)
         img_1 = img_1/255 * 2 - 1
