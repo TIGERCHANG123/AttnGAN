@@ -41,7 +41,7 @@ class generate_condition(tf.keras.Model):
 class Attn_generator(tf.keras.Model):
   def __init__(self):
     super(Attn_generator, self).__init__()
-    ngf = 90
+    ngf = 128
     self.input_layer = generator_Input(shape=[4, 4, ngf*16], name='h0_input')
     self.deconv_list_1 = [
       deconv(filters=ngf*8, name='h0_deconv1'),  # 256*8*8
@@ -81,7 +81,7 @@ class Attn_generator(tf.keras.Model):
 class Attn_discriminator(tf.keras.Model):
   def __init__(self):
     super(Attn_discriminator, self).__init__()
-    ndf = 45
+    ndf = 64
     self.input_layer_0 = discriminator_Input(filters=ndf, name='h0_input')
     self.output_layer_0 = discriminator_Output(ndf=ndf, name='h0_output')#3*64*64
 
