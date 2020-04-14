@@ -161,8 +161,10 @@ class noise_generator():
         return noise, auxi_dict
 
 if __name__ == '__main__':
-    root = 'D:/Automatic/SRTP/GAN'
+    root = 'D:/SRTP/GAN'
     self = CUB_dataset(root, 128)
     dataset = self.get_train_dataset()
     img_2, img, text_code = next(iter(dataset))
-    cv2.imshow('img', img_2[0].numpy())
+    cv2.imshow('img', ((img_2[0]+1)/2*255).numpy().astype(np.uint8))
+    cv2.imwrite('D:/pic/test.png', ((img_2[0]+1)/2*255).numpy().astype(np.uint8))
+    cv2.waitKey(0)

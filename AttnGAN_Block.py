@@ -12,7 +12,6 @@ class GLU(tf.keras.Model):
         nc = int(nc/2)
         return x[:, :, :, :nc] * tf.keras.activations.sigmoid(x[:, :, :, nc:])
 
-
 class conv(tf.keras.Model):
     def __init__(self, kernel_size, filters, strides, padding, name):
         super(conv, self).__init__()
@@ -29,17 +28,20 @@ class conv(tf.keras.Model):
 
 
 class deconv(tf.keras.Model):
-    def __init__(self, filters, strides, padding, name):
+    def __init__(self, filters, name):
         super(deconv, self).__init__()
-        self.conv = layers.Conv2DTranspose(filters, kernel_size=3,
-                                           strides=strides, padding=padding,
-                                           use_bias=False, name=name + '_conv',
-                                           kernel_initializer=RandomNormal(stddev=0.02))
+        self.upsample = layers.UpSampling2D(2)
+        self.conv = tf.keras.layers.Conv2D(filters, kernel_size=3, strides=1, name=name + '_conv',
+                                           padding='same', kernel_initializer=RandomNormal(stddev=0.02))
+        # self.conv = layers.Conv2DTranspose(filters, kernel_size=3,
+        #                                    strides=strides, padding=padding,
+        #                                    use_bias=False, name=name + '_conv',
+        #                                    kernel_initializer=RandomNormal(stddev=0.02))
         self.bn = layers.BatchNormalization(momentum=0.9, name=name + '_bn')
-        # self.relu = tf.keras.layers.ReLU(name=name+'_relu')
         self.relu = GLU()
 
     def call(self, x):
+        x = self.upsample(x)
         x = self.conv(x)
         x = self.bn(x)
         x = self.relu(x)
@@ -48,7 +50,7 @@ class deconv(tf.keras.Model):
 class Resdual_Block(tf.keras.Model):
   def __init__(self, filters, name):
       super(Resdual_Block, self).__init__()
-      self.conv1 = tf.keras.layers.Conv2D(filters, kernel_size=3, strides=1, padding='same',
+      self.conv1 = tf.keras.layers.Conv2D(filters*2, kernel_size=3, strides=1, padding='same',
                                          kernel_initializer=RandomNormal(stddev=0.02), name=name+'_conv1')
       self.conv2 = tf.keras.layers.Conv2D(filters, kernel_size=3, strides=1, padding='same',
                                          kernel_initializer=RandomNormal(stddev=0.02), name=name+'_conv2')
@@ -59,10 +61,10 @@ class Resdual_Block(tf.keras.Model):
   def call(self, x):
       # x -> R(w * h * c)
       y = self.conv1(x)
-      # y -> R(w * h * filters)
+      # y -> R(w * h * filters*2)
       y = self.bn1(y)
       y = self.Relu1(y)
-      # y -> R(w * h * filters/2)
+      # y -> R(w * h * filters)
       y = self.conv2(y)
       # y -> R(w * h * filters)
       y = self.bn2(y)
@@ -72,12 +74,18 @@ class Resdual_Block(tf.keras.Model):
 class attention(tf.keras.Model):
   def __init__(self, units, name):
     super(attention, self).__init__()
-    self.dense = layers.Dense(units=units, name=name+'_dense')
+    # self.dense = layers.Dense(units=units, name=name+'_dense')
+    self.dense = layers.Conv2D(filters=units, kernel_size=1, strides=1, padding='valid',
+                                         kernel_initializer=RandomNormal(stddev=0.02), name=name+'_conv2')
   def call(self, e, h):
     # e -> R(D*T), h -> R(h * w * D^)
     e_ = tf.transpose(e, [0, 2, 1])
     # e_ -> R(T * D)
+    e_ = tf.expand_dims(e_, axis=2)
+    #e_ -> R(T * 1 * D)
     e_ = self.dense(e_)
+    # e_ -> R(T * 1 * D^)
+    e_ = tf.squeeze(e_, axis=2)
     # e_ -> R(T * D^)
     e_ = tf.transpose(e_, [0, 2, 1])
     # e_ -> R(D^*T)
@@ -101,16 +109,17 @@ class attention(tf.keras.Model):
 class generator_Input(tf.keras.Model):
   def __init__(self, shape, name):
     super(generator_Input, self).__init__()
-    self.dense = layers.Dense(shape[0] * shape[1] * shape[2], use_bias=False, kernel_initializer=RandomNormal(stddev=0.02), name=name+'_dense')
+    self.dense = layers.Dense(shape[0] * shape[1] * shape[2] * 2, use_bias=False, kernel_initializer=RandomNormal(stddev=0.02), name=name+'_dense')
     self.reshape = layers.Reshape([shape[0], shape[1], shape[2]], name=name+'_reshape')
     self.bn = layers.BatchNormalization(momentum=0.9, name=name+'_bn')
     # self.relu = tf.keras.layers.ReLU()
-    self.relu = GLU()
+    # self.relu = GLU()
   def call(self, x):
     x = self.dense(x)
+    x = x[:, :x.shape[1]//2]*tf.keras.activations.sigmoid(x[:, x.shape[1]//2:])
     x = self.reshape(x)
     x = self.bn(x)
-    x = self.relu(x)
+    # x = self.relu(x)
     return x
 
 class generator_Output(tf.keras.Model):
@@ -159,7 +168,7 @@ class discriminator_Output(tf.keras.Model):
       code = tf.expand_dims(code, axis=2)
       # code -> R(1 * 1 * D)
       ones0 = tf.ones(shape=[1, x.shape[1], x.shape[2], 1], dtype=x.dtype)
-      # ones0 -> R(4 * 4 * ndf*8)
+      # ones0 -> R(4 * 4 * 1)
       image_text0 = ones0 * code
       # image_text0 -> R(4 * 4 * D)
       x = tf.concat([x, image_text0], axis=-1)
@@ -169,7 +178,7 @@ class discriminator_Output(tf.keras.Model):
       y = self.conv(x)
       # y -> R(1 * 1 * 1)
       y = self.actv(y)
-      return y
+      return tf.reshape(y, shape=[y.shape[0]])
 
 
 

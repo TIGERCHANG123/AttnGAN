@@ -66,12 +66,12 @@ class train_one_epoch():
         gradients_of_discriminator = Stage2_disc_tape.gradient(Stage2_disc_loss, Stage2_dist_variables)
         self.Stage2_discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, Stage2_dist_variables))
 
-        Stage1_gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
-        gradients_of_generator = Stage1_gen_tape.gradient(gen_loss_total, Stage1_gen_variables)
-        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, Stage1_gen_variables))
+        gen_variables = self.Generator.trainable_variables + self.Dense_mu_sigma.trainable_variables
+        gradients_of_generator = Stage1_gen_tape.gradient(gen_loss_total, gen_variables)
+        self.Stage1_generator_optimizer.apply_gradients(zip(gradients_of_generator, gen_variables))
 
-        self.gen_loss(Stage2_gen_loss)
-        self.disc_loss(Stage2_disc_loss)
+        self.gen_loss(gen_loss_total)
+        self.disc_loss(Stage2_disc_loss + Stage1_gen_loss)
     def train(self, epoch, mid_epoch, pic, text_generator):
         self.gen_loss.reset_states()
         self.disc_loss.reset_states()

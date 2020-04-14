@@ -11,7 +11,7 @@ class embedding(tf.keras.Model):
     # text -> R(T)
     # code -> R(T * D_)
     code = self.embedding(text)
-    code = self.drop(code)
+    # code = self.drop(code)
     whole_sequence_output_1, final_memory_state_1, final_carry_state_1 = self.lstm(code)
     whole_sequence_output_2, final_memory_state_2, final_carry_state_2 = self.go_backwards_lstm(code)
     # whole_sequence_output1,2 -> R(T * D), final_memory_state1,2 -> R(D)
@@ -20,6 +20,8 @@ class embedding(tf.keras.Model):
     whole_sequence_output = tf.transpose(whole_sequence_output, [0, 2, 1])
     # whole_sequence_output -> R(2D * T)
     final_memory_state = tf.concat([final_memory_state_1, final_memory_state_2], axis=-1)
+    final_memory_state = tf.transpose(final_memory_state, [1, 0])
+    final_memory_state = tf.reshape(final_memory_state, [-1, whole_sequence_output.shape[1]])
     # final_memory_state -> R(2D)
     return whole_sequence_output, final_memory_state
     # batch_size * (word_length * 2) * seq_length, batch size * (word length * 2)
@@ -41,20 +43,19 @@ class generate_condition(tf.keras.Model):
 class Attn_generator(tf.keras.Model):
   def __init__(self):
     super(Attn_generator, self).__init__()
-    ngf = 96
+    ngf = 90
     self.input_layer = generator_Input(shape=[4, 4, ngf*16], name='h0_input')
-
     self.deconv_list_1 = [
-      deconv(filters=ngf*8, strides=2, padding='same', name='h0_deconv1'),  # 256*8*8
-      deconv(filters=ngf*4, strides=2, padding='same', name='h0_deconv1'),#256*8*8
-      deconv(filters=ngf*2, strides=2, padding='same', name='h0_deconv2'),#128*16*16
-      deconv(filters=ngf, strides=2, padding='same', name='h0_deconv3'),#64*32*32
+      deconv(filters=ngf*8, name='h0_deconv1'),  # 256*8*8
+      deconv(filters=ngf*4, name='h0_deconv1'),#256*8*8
+      deconv(filters=ngf*2, name='h0_deconv2'),#128*16*16
+      deconv(filters=ngf, name='h0_deconv3'),#64*32*32
     ]
-    self.attention = attention(ngf/2, name='h1_attn')
+    self.attention = attention(ngf//2, name='h1_attn')
     self.deconv_list_2 = [
       Resdual_Block(ngf, name='h1_res1'),
       Resdual_Block(ngf, name='h1_res2'),
-      deconv(filters=ngf, strides=2, padding='same', name='h1_deconv'),
+      deconv(filters=ngf, name='h1_deconv'),
     ]
     self.output_0 = generator_Output(image_depth=3, strides=1, padding='same', name='h0_output')#3*64*64
     self.output_1 = generator_Output(image_depth=3, strides=1, padding='same', name='h1_output')
@@ -82,13 +83,13 @@ class Attn_generator(tf.keras.Model):
 class Attn_discriminator(tf.keras.Model):
   def __init__(self):
     super(Attn_discriminator, self).__init__()
-    ndf = 48
+    ndf = 45
     self.input_layer_0 = discriminator_Input(filters=ndf, name='h0_input')
     self.output_layer_0 = discriminator_Output(ndf=ndf, name='h0_output')#3*64*64
 
     self.input_layer_1 = discriminator_Input(filters=ndf, name='h1_input')
     self.middle_1 = [conv(kernel_size=4, filters=ndf*16, strides=2, padding='same', name='h1_middle1'),
-                     conv(kernel_size=3, filters=ndf * 8, strides=1, padding='same', name='h1_middle2'),]
+                     conv(kernel_size=3, filters=ndf*8, strides=1, padding='same', name='h1_middle2'),]
     self.output_layer_1 = discriminator_Output(ndf=ndf, name='h1_output')  # 3*64*64
   def call(self, text_embedding, image_0, image_1):
     # image_0 -> R(64 * 64 * 3)
