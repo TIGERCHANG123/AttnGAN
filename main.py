@@ -12,10 +12,10 @@ from datasets.CUB import CUB_dataset
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
-root = '/home/tigerc'
-# root = '/content/drive/My Drive'
-# dataset_root = '/content'
-dataset_root = '/home/tigerc'
+# root = '/home/tigerc'
+root = '/content/drive/My Drive'
+dataset_root = '/content'
+# dataset_root = '/home/tigerc'
 temp_root = root+'/temp'
 
 def main(continue_train, train_time, train_epoch, mid_epoch):
