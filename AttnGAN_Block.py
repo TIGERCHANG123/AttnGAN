@@ -161,6 +161,8 @@ class discriminator_Output(tf.keras.Model):
                                        padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
       self.conv = layers.Conv2D(1, kernel_size=4, strides=4, name=name + '_conv',
                                 padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
+      # self.flatten = layers.Flatten()
+      # self.dense = layers.Dense(1, use_bias=False, kernel_initializer=RandomNormal(stddev=0.02), name=name+'dense')
       self.actv = tf.keras.activations.sigmoid
   def call(self, x, text_embedding):
       # text_embedding -> R(D)
@@ -176,6 +178,8 @@ class discriminator_Output(tf.keras.Model):
       x = self.jointConv(x)
       # x -> R(4 * 4 * ndf*8)
       y = self.conv(x)
+      # y = self.flatten(x)
+      # y = self.dense(y)
       # y -> R(1 * 1 * 1)
       y = self.actv(y)
       return tf.reshape(y, shape=[y.shape[0]])
