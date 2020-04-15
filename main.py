@@ -21,7 +21,7 @@ temp_root = root+'/temp'
 def main(continue_train, train_time, train_epoch, mid_epoch):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
     noise_dim = 100
-    batch_size = 32
+    batch_size = 48
 
     # dataset = oxford_102_flowers_dataset(dataset_root,batch_size = batch_size)
     dataset = CUB_dataset(dataset_root,batch_size = batch_size)
