@@ -4,7 +4,7 @@ class embedding(tf.keras.Model):
   def __init__(self, num_encoder_tokens, embedding_dim, latent_dim):
     super(embedding, self).__init__()
     self.embedding = layers.Embedding(num_encoder_tokens, embedding_dim)
-    self.drop = layers.Dropout(0.5)
+    # self.drop = layers.Dropout(0.5)
     self.lstm = layers.LSTM(units=latent_dim, return_sequences=True, return_state=True)
     self.go_backwards_lstm = layers.LSTM(units=latent_dim, return_sequences=True, return_state=True, go_backwards=True)
   def call(self, text):
@@ -30,12 +30,14 @@ class generate_condition(tf.keras.Model):
     self.units = units
     self.flatten = tf.keras.layers.Flatten()
     self.Dense = tf.keras.layers.Dense(units * 2)
+    self.actv = layers.Activation('sigmoid', name='condition_sigmoid')
     # self.leakyRelu = tf.keras.layers.LeakyReLU(alpha=0.2)
   def call(self, x):
     x = self.flatten(x)
     x = self.Dense(x)
     # x = self.leakyRelu(x)
-    x = x[:, :self.units] * tf.keras.activations.sigmoid(x[:, self.units:])
+    x = x[:, :self.units] * self.actv(x[:, self.units:])
+    x = tf.cast(x, tf.float32)
     return x[:, :int(self.units/2)], x[:, int(self.units/2):]
 
 class Attn_generator(tf.keras.Model):
@@ -61,6 +63,7 @@ class Attn_generator(tf.keras.Model):
     # text_embedding -> R(D)
     # noise -> R(100)
     x = tf.concat([noise, text_embedding], axis=1)
+    # x=noise
     # x -> R((D + 100))
     h0 = self.input_layer(x)
     # h0 -> R(4 * 4 * ngf*16)
@@ -105,8 +108,8 @@ class Attn_discriminator(tf.keras.Model):
     return output0, output1
 
 def get_gan(num_tokens):
-  Dense_mu_sigma = generate_condition(100*2)
-  Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=100, latent_dim=128)
+  Dense_mu_sigma = generate_condition(256*2)
+  Embedding = embedding(num_encoder_tokens=num_tokens, embedding_dim=256, latent_dim=128)
   Generator = Attn_generator()
   Discriminator = Attn_discriminator()
   # genenrator的激活函数中使用GLU，res block中最终输出不使用激活函数，各个genenrator的loss加在一起统一后向传播。

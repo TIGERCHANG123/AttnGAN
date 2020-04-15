@@ -4,13 +4,14 @@ from tensorflow.keras import layers
 from tensorflow.keras.initializers import *
 
 class GLU(tf.keras.Model):
-    def __init__(self):
+    def __init__(self, name):
         super(GLU, self).__init__()
+        self.actv = layers.Activation('sigmoid', name=name + '_sigmoid')
     def call(self, x):
         nc = x.shape[3]
         assert nc % 2 == 0, 'channels dont divide 2!'
         nc = int(nc/2)
-        return x[:, :, :, :nc] * tf.keras.activations.sigmoid(x[:, :, :, nc:])
+        return x[:, :, :, :nc] * self.actv(x[:, :, :, nc:])
 
 class conv(tf.keras.Model):
     def __init__(self, kernel_size, filters, strides, padding, name):
@@ -38,7 +39,7 @@ class deconv(tf.keras.Model):
         #                                    use_bias=False, name=name + '_conv',
         #                                    kernel_initializer=RandomNormal(stddev=0.02))
         self.bn = layers.BatchNormalization(momentum=0.9, name=name + '_bn')
-        self.relu = GLU()
+        self.relu = GLU(name=name+'GLU')
 
     def call(self, x):
         x = self.upsample(x)
@@ -56,8 +57,8 @@ class Resdual_Block(tf.keras.Model):
                                          kernel_initializer=RandomNormal(stddev=0.02), name=name+'_conv2')
       self.bn1 = tf.keras.layers.BatchNormalization(name=name+'_bn1')
       self.bn2 = tf.keras.layers.BatchNormalization(name=name+'_bn2')
-      self.Relu1 = GLU()
-      # self.Relu2 = GLU()
+      self.Relu1 = GLU(name=name+'GLU')
+      # self.Relu2 = GLU(name=name+'GLU')
   def call(self, x):
       # x -> R(w * h * c)
       y = self.conv1(x)
@@ -89,7 +90,7 @@ class attention(tf.keras.Model):
     # h1 -> R(D^ * N)
     s = tf.matmul(tf.transpose(e_, [0, 2, 1]), h1)
     # s -> R(T * N)
-    beta = tf.nn.softmax(s, axis=1)
+    beta = tf.keras.activations.softmax(s, axis=1)
     c = tf.matmul(e_, beta)
     # c -> R(D^ * N)
     c = tf.transpose(c, [0, 2, 1])
@@ -106,12 +107,13 @@ class generator_Input(tf.keras.Model):
     self.dense = layers.Dense(shape[0] * shape[1] * shape[2], use_bias=False, kernel_initializer=RandomNormal(stddev=0.02), name=name+'_dense')
     self.bn = layers.BatchNormalization(momentum=0.9, name=name + '_bn')
     self.reshape = layers.Reshape([shape[0], shape[1], shape[2]//2], name=name+'_reshape')
+    self.actv = layers.Activation('sigmoid', name=name + '_sigmoid')
     # self.relu = tf.keras.layers.ReLU()
     # self.relu = GLU()
   def call(self, x):
     x = self.dense(x)
     x = self.bn(x)
-    x= x[:, :x.shape[1]//2] * tf.keras.activations.sigmoid(x[:, x.shape[1]//2:])
+    x= x[:, :x.shape[1]//2] * self.actv(x[:, x.shape[1]//2:])
     x = self.reshape(x)
     return x
 
@@ -120,7 +122,7 @@ class generator_Output(tf.keras.Model):
     super(generator_Output, self).__init__()
     self.conv = layers.Conv2D(3,kernel_size=3, strides=1, name=name+'_conv',
                                        padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
-    self.actv = layers.Activation(activation='tanh', name=name+'_tan')
+    self.actv = layers.Activation(activation='tanh', name=name+'_tan', dtype='float32')
   def call(self, x):
     x = self.conv(x)
     x = self.actv(x)
@@ -154,6 +156,7 @@ class discriminator_Output(tf.keras.Model):
                                        padding='same', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
       self.conv = layers.Conv2D(1, kernel_size=4, strides=4, name=name + '_conv',
                                 padding='valid', use_bias=False, kernel_initializer=RandomNormal(stddev=0.02))
+      self.actv = layers.Activation('sigmoid', dtype='float32', name=name+'_sigmoid')
   def call(self, x, text_embedding):
       # text_embedding -> R(D)
       code = tf.expand_dims(text_embedding, axis=1)
@@ -169,7 +172,7 @@ class discriminator_Output(tf.keras.Model):
       # x -> R(4 * 4 * ndf*8)
       y = self.conv(x)
       # y -> R(1 * 1 * 1)
-      y = tf.keras.activations.sigmoid(y)
+      y = self.actv(y)
       # print('mean y: ', (tf.reduce_mean(y)).numpy())
       return tf.squeeze(y)
 
